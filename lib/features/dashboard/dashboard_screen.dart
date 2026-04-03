@@ -1,10 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/neumorphic_theme.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/dashboard_provider.dart';
+import '../../data/models/dashboard_models.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = context.read<AuthProvider>();
+      final artistId = auth.user?['artistId'] ?? auth.user?['_id'];
+      if (artistId != null) {
+        context.read<DashboardProvider>().fetchDashboardData(artistId.toString());
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,92 +36,116 @@ class DashboardScreen extends StatelessWidget {
           gradient: AppColors.screenGradient,
         ),
         child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Consumer2<AuthProvider, DashboardProvider>(
+            builder: (context, auth, dashboard, _) {
+              if (dashboard.isLoading) {
+                return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+              }
+
+              if (dashboard.error != null) {
+                return Center(
+                  child: Text(
+                    dashboard.error!,
+                    style: const TextStyle(color: Colors.redAccent),
+                  ),
+                );
+              }
+
+              final artistName = dashboard.artistDetails?.name ?? auth.user?['name'] ?? 'Artist';
+              final profileUrl = dashboard.artistDetails?.profilePicture ?? dashboard.artistDetails?.image ?? auth.user?['profilePicture'];
+
+              return SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    // Header
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Welcome back,',
-                          style: TextStyle(
-                            color: AppColors.mutedForeground,
-                            fontSize: 14,
-                          ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Welcome back,',
+                              style: TextStyle(
+                                color: AppColors.mutedForeground,
+                                fontSize: 14,
+                              ),
+                            ),
+                            Text(
+                              artistName,
+                              style: TextStyle(
+                                color: AppColors.foreground,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                          ],
                         ),
-                        Text(
-                          'Artist Name', // Use dynamic name later
-                          style: TextStyle(
-                            color: AppColors.foreground,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: -0.5,
-                          ),
+                        CircleAvatar(
+                          radius: 24,
+                          backgroundColor: AppColors.card,
+                          backgroundImage: profileUrl != null ? NetworkImage(profileUrl) : null,
+                          child: profileUrl == null ? const Icon(Icons.person, color: AppColors.primary) : null,
                         ),
                       ],
                     ),
-                    const CircleAvatar(
-                      radius: 24,
-                      backgroundColor: AppColors.card,
-                      backgroundImage: null, // User avatar
-                      child: Icon(Icons.person, color: AppColors.primary),
+                    const SizedBox(height: 32),
+
+                    // Stats Grid
+                    if (dashboard.artistStats != null || dashboard.artistEarnings != null)
+                      _buildStatsGrid(dashboard.artistStats, dashboard.artistEarnings),
+                    const SizedBox(height: 32),
+
+                    // Recent Uploads / Activity Section Header
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Recent Activity',
+                          style: TextStyle(
+                            color: AppColors.foreground,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {},
+                          child: const Text('View All'),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                const SizedBox(height: 32),
+                    const SizedBox(height: 16),
 
-                // Stats Grid
-                _buildStatsGrid(),
-                const SizedBox(height: 32),
-
-                // Recent Uploads Section Header
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Recent Activity',
-                      style: TextStyle(
-                        color: AppColors.foreground,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                    // List
+                    if (dashboard.artistEarnings?.history != null && dashboard.artistEarnings!.history.isNotEmpty)
+                      ...dashboard.artistEarnings!.history.take(5).map((t) => _buildRecentActivityItem(t))
+                    else
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(20.0),
+                          child: Text(
+                            'No recent activity found.',
+                            style: TextStyle(color: AppColors.mutedForeground),
+                          ),
+                        ),
                       ),
-                    ),
-                    TextButton(
-                      onPressed: () {},
-                      child: const Text('View All'),
-                    ),
                   ],
                 ),
-                const SizedBox(height: 16),
-
-                // Dummy List
-                _buildRecentActivityItem(
-                  'Song Approved',
-                  'Your track "Neon Dreams" is now live!',
-                  FontAwesomeIcons.circleCheck,
-                  AppColors.primary,
-                ),
-                _buildRecentActivityItem(
-                  'New Gift Received',
-                  'You received 500 Coins from a fan.',
-                  FontAwesomeIcons.gift,
-                  AppColors.secondary,
-                ),
-              ],
-            ),
+              );
+            },
           ),
         ),
       ),
     );
   }
 
-  Widget _buildStatsGrid() {
+  Widget _buildStatsGrid(ArtistStats? stats, ArtistEarnings? earnings) {
+    final currencyFormatter = NumberFormat.currency(symbol: '\$', decimalDigits: 2);
+    final numberFormatter = NumberFormat.compact();
+
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -108,10 +154,26 @@ class DashboardScreen extends StatelessWidget {
       mainAxisSpacing: 16,
       childAspectRatio: 1.5,
       children: [
-        _buildStatCard('Total Plays', '124.5k', FontAwesomeIcons.play, AppColors.primary),
-        _buildStatCard('Engagement', '12.2%', FontAwesomeIcons.chartLine, AppColors.secondary),
-        _buildStatCard('Followers', '8,432', FontAwesomeIcons.users, Colors.blueAccent),
-        _buildStatCard('Earnings', '\$1,240', FontAwesomeIcons.wallet, Colors.orangeAccent),
+        _buildStatCard(
+            'Total Plays', 
+            stats != null ? numberFormatter.format(stats.totalPlays) : '0', 
+            FontAwesomeIcons.play, 
+            AppColors.primary),
+        _buildStatCard(
+            'Monthly Listeners', 
+            stats != null ? numberFormatter.format(stats.monthlyListeners) : '0', 
+            FontAwesomeIcons.headphones, 
+            AppColors.secondary),
+        _buildStatCard(
+            'Followers', 
+            stats != null ? numberFormatter.format(stats.socialMediaFollowers) : '0', 
+            FontAwesomeIcons.users, 
+            Colors.blueAccent),
+        _buildStatCard(
+            'Earnings', 
+            earnings != null ? currencyFormatter.format(earnings.totalEarnings) : '\$0', 
+            FontAwesomeIcons.wallet, 
+            Colors.orangeAccent),
       ],
     );
   }
@@ -129,7 +191,7 @@ class DashboardScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(icon, color: color.withOpacity(0.8), size: 18),
+              Icon(icon, color: color.withAlpha(204), size: 18),
               const Icon(Icons.arrow_forward_ios, color: AppColors.mutedForeground, size: 10),
             ],
           ),
@@ -158,7 +220,23 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildRecentActivityItem(String title, String subtitle, IconData icon, Color iconColor) {
+  Widget _buildRecentActivityItem(Transaction transaction) {
+    IconData icon;
+    Color iconColor;
+
+    if (transaction.type == 'gift_received') {
+      icon = FontAwesomeIcons.gift;
+      iconColor = AppColors.secondary;
+    } else if (transaction.type == 'payout') {
+      icon = FontAwesomeIcons.wallet;
+      iconColor = Colors.orangeAccent;
+    } else {
+      icon = FontAwesomeIcons.moneyBillTransfer;
+      iconColor = AppColors.primary;
+    }
+
+    final dateFormat = DateFormat.yMMMd().add_jm();
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -170,7 +248,7 @@ class DashboardScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
+              color: iconColor.withAlpha(26),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: iconColor, size: 18),
@@ -181,15 +259,17 @@ class DashboardScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  transaction.description,
                   style: const TextStyle(
                     color: AppColors.foreground,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  subtitle,
+                  dateFormat.format(transaction.createdAt),
                   style: const TextStyle(
                     color: AppColors.mutedForeground,
                     fontSize: 12,
@@ -198,6 +278,13 @@ class DashboardScreen extends StatelessWidget {
               ],
             ),
           ),
+          Text(
+            (transaction.amount > 0 ? '+' : '') + NumberFormat.currency(symbol: '\$').format(transaction.amount),
+            style: TextStyle(
+              color: transaction.amount > 0 ? AppColors.secondary : AppColors.foreground,
+              fontWeight: FontWeight.bold,
+            ),
+          )
         ],
       ),
     );

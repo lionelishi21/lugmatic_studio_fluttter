@@ -1,7 +1,5 @@
-# Uncomment this line to define a global platform for your project
-# platform :ios, '13.0'
+platform :ios, '13.0'
 
-# CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
 project 'Runner', {
@@ -30,6 +28,9 @@ flutter_ios_podfile_setup
 target 'Runner' do
   use_frameworks!
 
+  # Pin SDWebImage to 5.18.x — versions 5.19+ use iOS 17 HDR APIs not in Xcode 14.2 SDK
+  pod 'SDWebImage', '~> 5.18.0'
+
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
   target 'RunnerTests' do
     inherit! :search_paths
@@ -39,5 +40,21 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+    target.build_configurations.each do |config|
+      config.build_settings['SWIFT_STRICT_CONCURRENCY'] = 'minimal'
+    end
+  end
+
+  # Patch flutter_webrtc: AVCaptureDeviceTypeContinuityCamera/External are iOS 17+ only
+  webrtc_file = Dir["#{Dir.home}/.pub-cache/hosted/pub.dev/flutter_webrtc-*/ios/Classes/FlutterRTCMediaStream.m"].first
+  if webrtc_file && File.exist?(webrtc_file)
+    content = File.read(webrtc_file)
+    if content.include?('AVCaptureDeviceTypeContinuityCamera')
+      patched = content.gsub(
+        /if \(@available\(iOS 17\.0[^}]+AVCaptureDeviceTypeExternal[^}]+\}\s*\]\);\s*\}/m,
+        '// AVCaptureDeviceTypeContinuityCamera / External require iOS 17+ skipped for Xcode 14'
+      )
+      File.write(webrtc_file, patched) if patched != content
+    end
   end
 end

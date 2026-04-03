@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -198,8 +199,35 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                   
-                  const SizedBox(height: 48),
-                  
+                  const SizedBox(height: 32),
+
+                  // Register link
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'Not an artist yet?  ',
+                        style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+                      ),
+                      GestureDetector(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                        ),
+                        child: const Text(
+                          'Apply here',
+                          style: TextStyle(
+                            color: AppTheme.primary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
                   // Footer
                   const Text(
                     'Need help? Contact support',

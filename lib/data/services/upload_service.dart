@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
-import '../../core/api/api_client.dart';
+import '../../../core/api/api_client.dart';
 
 class UploadService {
   final ApiClient _apiClient = ApiClient();

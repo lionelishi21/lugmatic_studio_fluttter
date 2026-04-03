@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:provider/provider.dart';
 import '../dashboard/dashboard_screen.dart';
-import '../upload/upload_screen.dart';
 import '../live/live_screen.dart';
+import '../live/live_feed_screen.dart';
 import '../gifts/gifts_screen.dart';
+import '../account/account_screen.dart';
 import '../../core/constants/app_colors.dart';
+import '../../providers/live_streaming_provider.dart';
 
 class MainNavScreen extends StatefulWidget {
   const MainNavScreen({super.key});
@@ -18,9 +21,10 @@ class _MainNavScreenState extends State<MainNavScreen> {
 
   final List<Widget> _screens = [
     const DashboardScreen(),
-    const UploadScreen(),
+    const LiveFeedScreen(),
     const LiveScreen(),
     const GiftsScreen(),
+    const AccountScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -31,8 +35,13 @@ class _MainNavScreenState extends State<MainNavScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final liveStreaming = context.watch<LiveStreamingProvider>();
+    
     return Scaffold(
-      body: _screens[_selectedIndex],
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _screens,
+      ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: AppColors.background,
@@ -48,22 +57,43 @@ class _MainNavScreenState extends State<MainNavScreen> {
           unselectedItemColor: AppColors.mutedForeground,
           type: BottomNavigationBarType.fixed,
           elevation: 0,
-          items: const [
-            BottomNavigationBarItem(
+          items: [
+            const BottomNavigationBarItem(
               icon: Icon(FontAwesomeIcons.house),
               label: 'Dashboard',
             ),
-            BottomNavigationBarItem(
-              icon: Icon(FontAwesomeIcons.circleArrowUp),
-              label: 'Upload',
+            const BottomNavigationBarItem(
+              icon: Icon(FontAwesomeIcons.fire),
+              label: 'Clash',
             ),
             BottomNavigationBarItem(
-              icon: Icon(FontAwesomeIcons.towerBroadcast),
-              label: 'Live',
+              icon: Stack(
+                children: [
+                  const Icon(FontAwesomeIcons.towerBroadcast),
+                  if (liveStreaming.isStreaming)
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              label: 'Go Live',
             ),
-            BottomNavigationBarItem(
+            const BottomNavigationBarItem(
+              icon: Icon(FontAwesomeIcons.gift),
+              label: 'Gifts',
+            ),
+            const BottomNavigationBarItem(
               icon: Icon(FontAwesomeIcons.user),
-              label: 'Profile',
+              label: 'Account',
             ),
           ],
         ),
@@ -71,3 +101,4 @@ class _MainNavScreenState extends State<MainNavScreen> {
     );
   }
 }
+

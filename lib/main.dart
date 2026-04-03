@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
 import 'providers/auth_provider.dart';
+import 'providers/dashboard_provider.dart';
+import 'providers/live_streaming_provider.dart';
 import 'features/auth/login_screen.dart';
 import 'features/navigation/main_nav_screen.dart';
 
@@ -10,6 +12,8 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => DashboardProvider()),
+        ChangeNotifierProvider(create: (_) => LiveStreamingProvider()),
       ],
       child: const LugmaticArtistApp(),
     ),

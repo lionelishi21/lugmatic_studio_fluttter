@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../data/services/auth_service.dart';
+import '../data/services/socket_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -23,6 +24,7 @@ class AuthProvider extends ChangeNotifier {
     if (_token != null) {
       try {
         _user = await _authService.getMe();
+        SocketService().connect();
       } catch (e) {
         // Token might be invalid or expired
         await logout();
@@ -39,10 +41,11 @@ class AuthProvider extends ChangeNotifier {
       final data = await _authService.login(email, password);
       _token = data['accessToken'];
       _user = data['user'];
-      
+
       await _storage.write(key: 'accessToken', value: _token);
       await _storage.write(key: 'refreshToken', value: data['refreshToken']);
-      
+
+      SocketService().connect();
       notifyListeners();
     } catch (e) {
       rethrow;
@@ -57,6 +60,7 @@ class AuthProvider extends ChangeNotifier {
     _user = null;
     await _storage.delete(key: 'accessToken');
     await _storage.delete(key: 'refreshToken');
+    SocketService().disconnect();
     notifyListeners();
   }
 }
