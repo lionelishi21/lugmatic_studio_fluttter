@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/neumorphic_theme.dart';
 import '../../providers/auth_provider.dart';
+import 'profile_editor_screen.dart';
+import 'payout_settings_screen.dart';
 
 class AccountScreen extends StatelessWidget {
   const AccountScreen({super.key});
@@ -87,6 +89,26 @@ class AccountScreen extends StatelessWidget {
 
                 // Menu items
                 _buildMenuItem(
+                  icon: Icons.person_outline,
+                  label: 'Edit Profile',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ProfileEditorScreen()),
+                    );
+                  },
+                ),
+                _buildMenuItem(
+                  icon: Icons.payments_outlined,
+                  label: 'Payout & Verification',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const PayoutSettingsScreen()),
+                    );
+                  },
+                ),
+                _buildMenuItem(
                   icon: Icons.notifications_outlined,
                   label: 'Notifications',
                   onTap: () {},
@@ -94,11 +116,6 @@ class AccountScreen extends StatelessWidget {
                 _buildMenuItem(
                   icon: Icons.help_outline,
                   label: 'Help & Support',
-                  onTap: () {},
-                ),
-                _buildMenuItem(
-                  icon: Icons.privacy_tip_outlined,
-                  label: 'Privacy Policy',
                   onTap: () {},
                 ),
 
