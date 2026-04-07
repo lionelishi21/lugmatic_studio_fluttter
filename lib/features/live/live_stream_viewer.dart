@@ -1,6 +1,5 @@
-import 'dart:async';
-import 'package:flutter/material.dart';
 import 'package:livekit_client/livekit_client.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 import 'package:collection/collection.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../data/services/live_stream_service.dart';
@@ -31,7 +30,8 @@ class LiveStreamViewer extends StatefulWidget {
   State<LiveStreamViewer> createState() => _LiveStreamViewerState();
 }
 
-class _LiveStreamViewerState extends State<LiveStreamViewer> {
+class _LiveStreamViewerState extends State<LiveStreamViewer>
+    with WidgetsBindingObserver {
   final _liveService = LiveStreamService();
   final _socketService = SocketService();
   final _giftService = GiftService();
@@ -48,8 +48,17 @@ class _LiveStreamViewerState extends State<LiveStreamViewer> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     if (widget.isActive) {
       _connectAsViewer();
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _isConnected) {
+      debugPrint('[LiveKit] App resumed, re-syncing viewer tracks');
+      _updateTracks();
     }
   }
 
@@ -70,6 +79,7 @@ class _LiveStreamViewerState extends State<LiveStreamViewer> {
   }
 
   void _disconnect() {
+    WidgetsBinding.instance.removeObserver(this);
     _chatSub?.cancel();
     _viewerSub?.cancel();
     _giftSub?.cancel();
@@ -93,6 +103,10 @@ class _LiveStreamViewerState extends State<LiveStreamViewer> {
     } catch (e) {
       print('Viewer connection error: $e');
     }
+  }
+
+  void _updateTracks() {
+    if (mounted) setState(() {}); // Trigger rebuild to re-evaluate track
   }
 
   void _setupSocketListeners() {
@@ -197,14 +211,22 @@ class _LiveStreamViewerState extends State<LiveStreamViewer> {
     final track = (_room!.remoteParticipants.values.firstOrNull?.videoTrackPublications.firstOrNull?.track 
                 ?? _room!.localParticipant?.videoTrackPublications.firstOrNull?.track) as VideoTrack?;
 
-    return Stack(
-      children: [
-        // Video View
-        Positioned.fill(
-          child: track != null 
-            ? VideoTrackRenderer(track, fit: VideoViewFit.cover)
-            : Container(color: Colors.black, child: const Center(child: CircularProgressIndicator())),
-        ),
+    return VisibilityDetector(
+      key: Key('stream-viewer-${widget.streamId}'),
+      onVisibilityChanged: (info) {
+        if (info.visibleFraction > 0.1 && _isConnected) {
+          debugPrint('[LiveKit] Viewer screen visible, re-syncing');
+          _updateTracks();
+        }
+      },
+      child: Stack(
+        children: [
+          // Video View
+          Positioned.fill(
+            child: track != null 
+              ? VideoTrackRenderer(track, fit: VideoViewFit.cover)
+              : Container(color: Colors.black, child: const Center(child: CircularProgressIndicator())),
+          ),
 
         // Dark Gradient Overlay
         Positioned.fill(

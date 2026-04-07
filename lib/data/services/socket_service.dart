@@ -20,6 +20,7 @@ class SocketService {
   final _clashStartedController = StreamController<Map<String, dynamic>>.broadcast();
   final _clashScoreController = StreamController<Map<String, dynamic>>.broadcast();
   final _clashEndedController = StreamController<Map<String, dynamic>>.broadcast();
+  final _notificationController = StreamController<Map<String, dynamic>>.broadcast();
 
   Stream<Map<String, dynamic>> get streamState => _streamStateController.stream;
   Stream<Map<String, dynamic>> get chatMessages => _chatMessageController.stream;
@@ -29,6 +30,7 @@ class SocketService {
   Stream<Map<String, dynamic>> get clashStarted => _clashStartedController.stream;
   Stream<Map<String, dynamic>> get clashScore => _clashScoreController.stream;
   Stream<Map<String, dynamic>> get clashEnded => _clashEndedController.stream;
+  Stream<Map<String, dynamic>> get onNotification => _notificationController.stream;
 
   Future<void> connect() async {
     if (_socket?.connected == true) return;
@@ -64,6 +66,10 @@ class SocketService {
     _socket!.on('clash:started', (data) => _clashStartedController.add(Map<String, dynamic>.from(data)));
     _socket!.on('clash:score-update', (data) => _clashScoreController.add(Map<String, dynamic>.from(data)));
     _socket!.on('clash:ended', (data) => _clashEndedController.add(Map<String, dynamic>.from(data)));
+    _socket!.on('notification:new', (data) {
+      print('[Socket] New notification: $data');
+      _notificationController.add(Map<String, dynamic>.from(data));
+    });
   }
 
   void joinStream(String streamId) {
@@ -92,5 +98,6 @@ class SocketService {
     _clashStartedController.close();
     _clashScoreController.close();
     _clashEndedController.close();
+    _notificationController.close();
   }
 }

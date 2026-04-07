@@ -4,6 +4,7 @@ import 'core/theme/app_theme.dart';
 import 'providers/auth_provider.dart';
 import 'providers/dashboard_provider.dart';
 import 'providers/live_streaming_provider.dart';
+import 'providers/track_provider.dart';
 import 'features/auth/login_screen.dart';
 import 'features/navigation/main_nav_screen.dart';
 
@@ -14,6 +15,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => DashboardProvider()),
         ChangeNotifierProvider(create: (_) => LiveStreamingProvider()),
+        ChangeNotifierProvider(create: (_) => TrackProvider()),
       ],
       child: const LugmaticArtistApp(),
     ),

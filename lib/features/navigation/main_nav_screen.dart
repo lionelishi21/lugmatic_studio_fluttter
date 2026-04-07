@@ -6,6 +6,7 @@ import '../live/live_screen.dart';
 import '../live/live_feed_screen.dart';
 import '../gifts/gifts_screen.dart';
 import '../account/account_screen.dart';
+import '../tracks/tracks_list_screen.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/live_streaming_provider.dart';
 
@@ -21,6 +22,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
 
   final List<Widget> _screens = [
     const DashboardScreen(),
+    const TracksListScreen(),
     const LiveFeedScreen(),
     const LiveScreen(),
     const GiftsScreen(),
@@ -56,20 +58,26 @@ class _MainNavScreenState extends State<MainNavScreen> {
           selectedItemColor: AppColors.primary,
           unselectedItemColor: AppColors.mutedForeground,
           type: BottomNavigationBarType.fixed,
+          selectedFontSize: 10,
+          unselectedFontSize: 10,
           elevation: 0,
           items: [
             const BottomNavigationBarItem(
-              icon: Icon(FontAwesomeIcons.house),
-              label: 'Dashboard',
+              icon: Icon(FontAwesomeIcons.house, size: 20),
+              label: 'Home',
             ),
             const BottomNavigationBarItem(
-              icon: Icon(FontAwesomeIcons.fire),
+              icon: Icon(FontAwesomeIcons.music, size: 20),
+              label: 'Tracks',
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(FontAwesomeIcons.fire, size: 20),
               label: 'Clash',
             ),
             BottomNavigationBarItem(
               icon: Stack(
                 children: [
-                  const Icon(FontAwesomeIcons.towerBroadcast),
+                  const Icon(FontAwesomeIcons.towerBroadcast, size: 20),
                   if (liveStreaming.isStreaming)
                     Positioned(
                       right: 0,
@@ -85,14 +93,14 @@ class _MainNavScreenState extends State<MainNavScreen> {
                     ),
                 ],
               ),
-              label: 'Go Live',
+              label: 'Live',
             ),
             const BottomNavigationBarItem(
-              icon: Icon(FontAwesomeIcons.gift),
+              icon: Icon(FontAwesomeIcons.gift, size: 20),
               label: 'Gifts',
             ),
             const BottomNavigationBarItem(
-              icon: Icon(FontAwesomeIcons.user),
+              icon: Icon(FontAwesomeIcons.user, size: 20),
               label: 'Account',
             ),
           ],
