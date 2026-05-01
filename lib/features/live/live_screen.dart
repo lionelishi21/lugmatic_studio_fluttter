@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/neumorphic_theme.dart';
 import '../../providers/live_streaming_provider.dart';
+import 'widgets/clash_opponent_view.dart';
 
 class LiveScreen extends StatefulWidget {
   const LiveScreen({super.key});
@@ -258,10 +259,12 @@ class _LiveScreenState extends State<LiveScreen> with WidgetsBindingObserver {
 
   Widget _buildStreamingView(LiveStreamingProvider provider) {
     final track = provider.room?.localParticipant?.videoTrackPublications.firstOrNull?.track as LocalVideoTrack?;
+    final clash = provider.activeClash;
+    final inClash = provider.hasClashRoom && clash != null;
 
     return Column(
       children: [
-        // Live Video View
+        // Live Video View — split when in a clash
         Container(
           height: 400,
           clipBehavior: Clip.antiAlias,
@@ -269,16 +272,52 @@ class _LiveScreenState extends State<LiveScreen> with WidgetsBindingObserver {
             borderRadius: BorderRadius.circular(24),
             color: Colors.black,
           ),
-          child: Stack(
-            children: [
-              if (track != null)
-                VideoTrackRenderer(
-                  track,
-                  key: ValueKey(track.sid), // Force rebuild if track changes
-                  fit: VideoViewFit.contain,
+          child: inClash
+              ? Column(
+                  children: [
+                    // Top: artist's own camera
+                    Expanded(
+                      child: Stack(children: [
+                        if (track != null)
+                          VideoTrackRenderer(track, key: ValueKey(track.sid), fit: VideoViewFit.cover)
+                        else
+                          const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+                        Positioned(
+                          top: 8, left: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(12)),
+                            child: const Row(children: [
+                              Icon(Icons.circle, size: 8, color: Colors.redAccent),
+                              SizedBox(width: 6),
+                              Text('YOU', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                            ]),
+                          ),
+                        ),
+                      ]),
+                    ),
+                    Container(height: 2, color: Colors.white24),
+                    // Bottom: opponent video from shared clash room
+                    Expanded(
+                      child: ClashOpponentView(
+                        clashRoomUrl: provider.clashRoomUrl!,
+                        clashRoomToken: provider.clashRoomToken!,
+                        opponentUserId: provider.clashOpponentUserId ?? '',
+                        opponentName: (clash['opponent'] is Map ? clash['opponent']['name'] : null) ?? 'Opponent',
+                      ),
+                    ),
+                  ],
                 )
-              else
-                const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+              : Stack(
+                  children: [
+                    if (track != null)
+                      VideoTrackRenderer(
+                        track,
+                        key: ValueKey(track.sid),
+                        fit: VideoViewFit.contain,
+                      )
+                    else
+                      const Center(child: CircularProgressIndicator(color: AppColors.primary)),
               
               // Overlay info
               Positioned(

@@ -27,6 +27,11 @@ class LiveStreamingProvider extends ChangeNotifier {
   bool _isCameraOn = true;
   Map<String, dynamic>? _lastGift;
   Map<String, dynamic>? _activeClash;
+  // Clash room credentials received via socket when clash starts
+  String? _clashRoomUrl;
+  String? _clashRoomToken;
+  String? _clashChallengerUserId;
+  String? _clashOpponentUserId;
 
   StreamSubscription? _chatSub;
   StreamSubscription? _giftSub;
@@ -50,6 +55,11 @@ class LiveStreamingProvider extends ChangeNotifier {
   bool get isCameraOn => _isCameraOn;
   Map<String, dynamic>? get lastGift => _lastGift;
   Map<String, dynamic>? get activeClash => _activeClash;
+  String? get clashRoomUrl => _clashRoomUrl;
+  String? get clashRoomToken => _clashRoomToken;
+  String? get clashChallengerUserId => _clashChallengerUserId;
+  String? get clashOpponentUserId => _clashOpponentUserId;
+  bool get hasClashRoom => _clashRoomToken != null && _clashRoomUrl != null;
 
   void clearSummary() {
     _summary = null;
@@ -159,6 +169,14 @@ class LiveStreamingProvider extends ChangeNotifier {
 
     _clashStartSub = _socketService.clashStarted.listen((data) {
       _activeClash = data;
+      // Extract the clash room credentials sent to this artist specifically
+      final room = data['clashRoom'] as Map<String, dynamic>?;
+      if (room != null) {
+        _clashRoomUrl = room['url'] as String?;
+        _clashRoomToken = room['token'] as String?;
+      }
+      _clashChallengerUserId = data['challengerUserId'] as String?;
+      _clashOpponentUserId   = data['opponentUserId']   as String?;
       notifyListeners();
     });
 
@@ -170,8 +188,19 @@ class LiveStreamingProvider extends ChangeNotifier {
       }
     });
 
+    _socketService.onNotification.listen((data) {
+      if (data['type'] == 'clash:realm-changed') {
+        if (_activeClash != null) {
+          _activeClash!['realm'] = data['realm'];
+          notifyListeners();
+        }
+      }
+    });
+
     _clashEndSub = _socketService.clashEnded.listen((data) {
       _activeClash = null;
+      _clashRoomToken = null;
+      _clashRoomUrl = null;
       notifyListeners();
     });
 
