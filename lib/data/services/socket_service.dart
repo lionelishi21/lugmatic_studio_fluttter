@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../core/api/api_client.dart';
@@ -10,6 +11,7 @@ class SocketService {
 
   IO.Socket? _socket;
   final _storage = const FlutterSecureStorage();
+  String? _currentStreamId;
   
   // Stream controllers for real-time updates
   final _streamStateController = StreamController<Map<String, dynamic>>.broadcast();
@@ -47,11 +49,16 @@ class SocketService {
       .build());
 
     _socket!.onConnect((_) {
-      print('Socket connected: ${_socket!.id}');
+      debugPrint('Socket connected: ${_socket!.id}');
+      // Re-join active stream after reconnect
+      if (_currentStreamId != null) {
+        _socket!.emit('stream:join', {'streamId': _currentStreamId});
+        debugPrint('Re-joined stream $_currentStreamId after reconnect');
+      }
     });
 
     _socket!.onDisconnect((_) {
-      print('Socket disconnected');
+      debugPrint('Socket disconnected — reconnection enabled');
     });
 
     // Stream handlers
@@ -73,10 +80,12 @@ class SocketService {
   }
 
   void joinStream(String streamId) {
+    _currentStreamId = streamId;
     _socket?.emit('stream:join', {'streamId': streamId});
   }
 
   void leaveStream(String streamId) {
+    if (_currentStreamId == streamId) _currentStreamId = null;
     _socket?.emit('stream:leave', {'streamId': streamId});
   }
 

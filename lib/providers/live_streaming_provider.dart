@@ -56,17 +56,53 @@ class LiveStreamingProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> startStreaming(String title) async {
+  Future<void> startStreaming(String title, {String? description, String? category}) async {
     _isBusy = true;
     notifyListeners();
 
     try {
-      final stream = await _liveService.createStream(title: title);
+      final stream = await _liveService.createStream(
+        title: title,
+        description: description,
+        category: category,
+      );
       _streamId = stream['_id'];
       
       final tokenData = await _liveService.getStreamToken(_streamId!);
       final String url = tokenData['url'];
       final String token = tokenData['token'];
+
+      _room = Room();
+      await _room!.connect(url, token);
+      
+      await _room!.localParticipant?.setCameraEnabled(true);
+      await _room!.localParticipant?.setMicrophoneEnabled(true);
+
+      _setupSocketListeners(_streamId!);
+      _liveSince = DateTime.now();
+      _startTimer();
+
+      _isStreaming = true;
+      _isBusy = false;
+      _summary = null;
+      notifyListeners();
+    } catch (e) {
+      _isBusy = false;
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  Future<void> startClashStream(String clashId) async {
+    _isBusy = true;
+    notifyListeners();
+
+    try {
+      final data = await _clashService.joinScheduledClash(clashId);
+      _streamId = data['streamId'] ?? clashId; // Usually clash acts as stream
+      
+      final String url = data['url'];
+      final String token = data['token'];
 
       _room = Room();
       await _room!.connect(url, token);

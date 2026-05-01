@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/api/api_client.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/neumorphic_theme.dart';
+import '../account/payout_settings_screen.dart';
 
 class GiftsScreen extends StatefulWidget {
   const GiftsScreen({super.key});
@@ -112,9 +113,12 @@ class _GiftsScreenState extends State<GiftsScreen> {
           ),
           const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const PayoutSettingsScreen()),
+            ),
             style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
-            child: const Text('Withdraw to Stripe'),
+            child: const Text('Withdraw / Payout Settings'),
           ),
         ],
       ),

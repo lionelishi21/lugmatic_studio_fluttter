@@ -13,14 +13,19 @@ class LiveScreen extends StatefulWidget {
   State<LiveScreen> createState() => _LiveScreenState();
 }
 
-class _LiveScreenState extends State<LiveScreen> {
+class _LiveScreenState extends State<LiveScreen> with WidgetsBindingObserver {
   final _titleController = TextEditingController();
+  final _descriptionController = TextEditingController();
   final _chatController = TextEditingController();
+  String _selectedCategory = 'music';
+
+  static const _categories = ['music', 'podcast', 'qa', 'performance', 'other'];
   StreamSubscription? _invitationSub;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // Listen for clash invitations
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<LiveStreamingProvider>();
@@ -31,7 +36,21 @@ class _LiveScreenState extends State<LiveScreen> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // App returned to foreground, check if we need to refresh camera
+      final provider = context.read<LiveStreamingProvider>();
+      if (provider.isStreaming && provider.isCameraOn) {
+        // Simple trick to force track to re-engage: toggle briefly or just notify
+        // LiveKit usually handles this, but a manual refresh of the renderer helps
+        setState(() {}); 
+      }
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _invitationSub?.cancel();
     _titleController.dispose();
     _chatController.dispose();
@@ -47,7 +66,11 @@ class _LiveScreenState extends State<LiveScreen> {
     }
 
     try {
-      await context.read<LiveStreamingProvider>().startStreaming(_titleController.text);
+      await context.read<LiveStreamingProvider>().startStreaming(
+        _titleController.text,
+        description: _descriptionController.text,
+        category: _selectedCategory,
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -151,13 +174,39 @@ class _LiveScreenState extends State<LiveScreen> {
             prefixIcon: Icons.title,
           ),
         ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _descriptionController,
+          style: const TextStyle(color: AppColors.foreground),
+          maxLines: 2,
+          decoration: NeumorphicTheme.neumorphicInputDecoration(
+            label: 'Description (optional)',
+            hint: 'Tell fans what to expect...',
+            prefixIcon: Icons.description_outlined,
+          ),
+        ),
+        const SizedBox(height: 16),
+        DropdownButtonFormField<String>(
+          value: _selectedCategory,
+          dropdownColor: AppColors.card,
+          style: const TextStyle(color: AppColors.foreground),
+          decoration: NeumorphicTheme.neumorphicInputDecoration(
+            label: 'Category',
+            prefixIcon: Icons.category_outlined,
+          ),
+          items: _categories.map((c) => DropdownMenuItem(
+            value: c,
+            child: Text(c[0].toUpperCase() + c.substring(1)),
+          )).toList(),
+          onChanged: (val) => setState(() => _selectedCategory = val ?? 'music'),
+        ),
         const SizedBox(height: 32),
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
             onPressed: provider.isBusy ? null : _startStreaming,
-            child: provider.isBusy 
-              ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)) 
+            child: provider.isBusy
+              ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
               : const Text('Go Live Now'),
           ),
         ),
@@ -223,7 +272,11 @@ class _LiveScreenState extends State<LiveScreen> {
           child: Stack(
             children: [
               if (track != null)
-                VideoTrackRenderer(track)
+                VideoTrackRenderer(
+                  track,
+                  key: ValueKey(track.sid), // Force rebuild if track changes
+                  fit: VideoViewFit.contain,
+                )
               else
                 const Center(child: CircularProgressIndicator(color: AppColors.primary)),
               
