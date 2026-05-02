@@ -188,6 +188,10 @@ class _TracksListScreenState extends State<TracksListScreen> {
                     children: [
                       _buildStatusBadge(track.status),
                       const SizedBox(width: 8),
+                      if (track.role != null) ...[
+                        _buildRoleBadge(track.role!, track.share),
+                        const SizedBox(width: 8),
+                      ],
                       Text(
                         dateFormat.format(track.createdAt),
                         style: const TextStyle(
@@ -257,7 +261,7 @@ class _TracksListScreenState extends State<TracksListScreen> {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, py: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
@@ -265,6 +269,30 @@ class _TracksListScreenState extends State<TracksListScreen> {
       ),
       child: Text(
         status.toUpperCase(),
+        style: TextStyle(
+          color: color,
+          fontSize: 8,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRoleBadge(String role, double? share) {
+    final bool isPrimary = role.toLowerCase() == 'primary';
+    final Color color = isPrimary ? AppColors.primary : Colors.blueAccent;
+    final String shareText = share != null ? ' (${share.round()}%)' : '';
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.3), width: 0.5),
+      ),
+      child: Text(
+        '${role.toUpperCase()}$shareText',
         style: TextStyle(
           color: color,
           fontSize: 8,

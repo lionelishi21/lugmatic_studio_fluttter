@@ -4,11 +4,13 @@ import 'package:provider/provider.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../live/live_screen.dart';
 import '../live/live_feed_screen.dart';
+import '../clashes/clashes_screen.dart';
 import '../gifts/gifts_screen.dart';
 import '../account/account_screen.dart';
 import '../tracks/tracks_list_screen.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/live_streaming_provider.dart';
+import '../../providers/navigation_provider.dart';
 
 class MainNavScreen extends StatefulWidget {
   const MainNavScreen({super.key});
@@ -18,30 +20,24 @@ class MainNavScreen extends StatefulWidget {
 }
 
 class _MainNavScreenState extends State<MainNavScreen> {
-  int _selectedIndex = 0;
-
   final List<Widget> _screens = [
     const DashboardScreen(),
     const TracksListScreen(),
-    const LiveFeedScreen(),
+    const ClashesScreen(),
     const LiveScreen(),
+    const LiveFeedScreen(),
     const GiftsScreen(),
     const AccountScreen(),
   ];
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final liveStreaming = context.watch<LiveStreamingProvider>();
+    final navProvider = context.watch<NavigationProvider>();
     
     return Scaffold(
       body: IndexedStack(
-        index: _selectedIndex,
+        index: navProvider.selectedIndex,
         children: _screens,
       ),
       bottomNavigationBar: Container(
@@ -52,8 +48,8 @@ class _MainNavScreenState extends State<MainNavScreen> {
           ),
         ),
         child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: _onItemTapped,
+          currentIndex: navProvider.selectedIndex,
+          onTap: (index) => navProvider.setIndex(index),
           backgroundColor: Colors.transparent,
           selectedItemColor: AppColors.primary,
           unselectedItemColor: AppColors.mutedForeground,
@@ -94,6 +90,10 @@ class _MainNavScreenState extends State<MainNavScreen> {
                 ],
               ),
               label: 'Live',
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(FontAwesomeIcons.tv, size: 20),
+              label: 'Watch',
             ),
             const BottomNavigationBarItem(
               icon: Icon(FontAwesomeIcons.gift, size: 20),

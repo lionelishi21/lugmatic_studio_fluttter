@@ -63,4 +63,13 @@ class AuthProvider extends ChangeNotifier {
     SocketService().disconnect();
     notifyListeners();
   }
+  
+  Future<void> getMe() async {
+    try {
+      _user = await _authService.getMe();
+      notifyListeners();
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

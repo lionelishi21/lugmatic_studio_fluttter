@@ -5,6 +5,9 @@ import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/neumorphic_theme.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/track_provider.dart';
+import '../../providers/navigation_provider.dart';
+import '../tracks/track_analytics_screen.dart';
 import '../../providers/dashboard_provider.dart';
 import '../../data/models/dashboard_models.dart';
 
@@ -23,7 +26,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final auth = context.read<AuthProvider>();
       final artistId = auth.user?['artistId'] ?? auth.user?['_id'];
       if (artistId != null) {
-        context.read<DashboardProvider>().fetchDashboardData(artistId.toString());
+        final id = artistId.toString();
+        context.read<DashboardProvider>().fetchDashboardData(id);
+        context.read<TrackProvider>().fetchTracks(id);
       }
     });
   }
@@ -36,8 +41,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           gradient: AppColors.screenGradient,
         ),
         child: SafeArea(
-          child: Consumer2<AuthProvider, DashboardProvider>(
-            builder: (context, auth, dashboard, _) {
+          child: Consumer3<AuthProvider, DashboardProvider, TrackProvider>(
+            builder: (context, auth, dashboard, trackProvider, _) {
+              final navProvider = context.read<NavigationProvider>();
+              
               if (dashboard.isLoading) {
                 return const Center(child: CircularProgressIndicator(color: AppColors.primary));
               }
@@ -96,10 +103,66 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                     // Stats Grid
                     if (dashboard.artistStats != null || dashboard.artistEarnings != null)
-                      _buildStatsGrid(dashboard.artistStats, dashboard.artistEarnings),
+                      _buildStatsGrid(dashboard.artistStats, dashboard.artistEarnings, navProvider),
                     const SizedBox(height: 32),
 
-                    // Recent Uploads / Activity Section Header
+                    // My Tracks Section Header
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'My Tracks',
+                          style: TextStyle(
+                            color: AppColors.foreground,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => navProvider.setIndex(1),
+                          child: const Text('View All'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Horizontal Tracks List
+                    if (trackProvider.tracks.isNotEmpty)
+                      SizedBox(
+                        height: 160,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: trackProvider.tracks.length > 5 ? 5 : trackProvider.tracks.length,
+                          itemBuilder: (context, index) {
+                            final track = trackProvider.tracks[index];
+                            return _buildTrackCard(track);
+                          },
+                        ),
+                      )
+                    else if (trackProvider.isLoading)
+                      const SizedBox(height: 160, child: Center(child: CircularProgressIndicator()))
+                    else
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(24),
+                        decoration: NeumorphicTheme.neumorphicDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Column(
+                          children: [
+                            Icon(Icons.music_note_outlined, color: AppColors.mutedForeground, size: 32),
+                            SizedBox(height: 8),
+                            Text(
+                              'No tracks uploaded yet',
+                              style: TextStyle(color: AppColors.mutedForeground, fontSize: 14),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                    const SizedBox(height: 32),
+
+                    // Recent Activity Section Header
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -110,10 +173,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
-                        ),
-                        TextButton(
-                          onPressed: () {},
-                          child: const Text('View All'),
                         ),
                       ],
                     ),
@@ -142,7 +201,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildStatsGrid(ArtistStats? stats, ArtistEarnings? earnings) {
+  Widget _buildStatsGrid(ArtistStats? stats, ArtistEarnings? earnings, NavigationProvider navProvider) {
     final currencyFormatter = NumberFormat.currency(symbol: '\$', decimalDigits: 2);
     final numberFormatter = NumberFormat.compact();
 
@@ -158,7 +217,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             'Total Plays', 
             stats != null ? numberFormatter.format(stats.totalPlays) : '0', 
             FontAwesomeIcons.play, 
-            AppColors.primary),
+            AppColors.primary,
+            onTap: () => navProvider.setIndex(1)),
         _buildStatCard(
             'Monthly Listeners', 
             stats != null ? numberFormatter.format(stats.monthlyListeners) : '0', 
@@ -173,50 +233,130 @@ class _DashboardScreenState extends State<DashboardScreen> {
             'Earnings', 
             earnings != null ? currencyFormatter.format(earnings.totalEarnings) : '\$0', 
             FontAwesomeIcons.wallet, 
-            Colors.orangeAccent),
+            Colors.orangeAccent,
+            onTap: () => navProvider.setIndex(4)), // index 4 is Gifts/Earnings
       ],
     );
   }
 
-  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+  Widget _buildStatCard(String label, String value, IconData icon, Color color, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: NeumorphicTheme.neumorphicDecoration(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Icon(icon, color: color.withAlpha(204), size: 18),
+                const Icon(Icons.arrow_forward_ios, color: AppColors.mutedForeground, size: 10),
+              ],
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: const TextStyle(
+                    color: AppColors.foreground,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: AppColors.mutedForeground,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTrackCard(track) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TrackAnalyticsScreen(track: track),
+          ),
+        );
+      },
+      child: Container(
+        width: 130,
+        margin: const EdgeInsets.only(right: 16),
+        padding: const EdgeInsets.all(12),
+        decoration: NeumorphicTheme.neumorphicDecoration(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: track.coverArtUrl != null || track.coverArt != null
+                  ? Image.network(
+                      track.coverArtUrl ?? track.coverArt!,
+                      height: 80,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, _, __) => _buildPlaceholderCover(),
+                    )
+                  : _buildPlaceholderCover(),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              track.name,
+              style: const TextStyle(
+                color: AppColors.foreground,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const Spacer(),
+            Row(
+              children: [
+                const Icon(FontAwesomeIcons.play, color: AppColors.primary, size: 8),
+                const SizedBox(width: 4),
+                Text(
+                  NumberFormat.compact().format(track.playCount),
+                  style: const TextStyle(
+                    color: AppColors.primary,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlaceholderCover() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: NeumorphicTheme.neumorphicDecoration(
-        borderRadius: BorderRadius.circular(20),
+      height: 80,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Icon(icon, color: color.withAlpha(204), size: 18),
-              const Icon(Icons.arrow_forward_ios, color: AppColors.mutedForeground, size: 10),
-            ],
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style: const TextStyle(
-                  color: AppColors.foreground,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: AppColors.mutedForeground,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+      child: const Icon(FontAwesomeIcons.music, color: AppColors.primary, size: 20),
     );
   }
 

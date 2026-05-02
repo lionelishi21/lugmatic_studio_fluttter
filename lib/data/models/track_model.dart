@@ -7,6 +7,8 @@ class Track {
   final int playCount;
   final String? uploadSource;
   final DateTime createdAt;
+  final double? share;
+  final String? role;
 
   Track({
     required this.id,
@@ -17,18 +19,22 @@ class Track {
     required this.playCount,
     this.uploadSource,
     required this.createdAt,
+    this.share,
+    this.role,
   });
 
   factory Track.fromJson(Map<String, dynamic> json) {
     return Track(
       id: json['_id'] ?? '',
-      name: json['name'] ?? 'Unknown Track',
-      coverArt: json['coverArt'],
+      name: json['title'] ?? json['name'] ?? 'Unknown Track',
+      coverArt: json['coverArt'] ?? json['coverImage'],
       coverArtUrl: json['coverArtUrl'],
       status: json['status'] ?? 'pending',
-      playCount: json['playCount'] ?? 0,
+      playCount: json['plays'] ?? json['playCount'] ?? 0,
       uploadSource: json['uploadSource'],
       createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
+      share: json['share'] != null ? (json['share'] as num).toDouble() : null,
+      role: json['role'],
     );
   }
 }

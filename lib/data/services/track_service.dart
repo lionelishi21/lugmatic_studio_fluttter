@@ -7,10 +7,14 @@ class TrackService {
 
   Future<List<Track>> getArtistTracks(String artistId) async {
     try {
-      final response = await _apiClient.dio.get('/artist/$artistId/songs');
+      // Point to unified dashboard endpoint that includes primary songs and collaborations
+      final response = await _apiClient.dio.get('/users/contributor/dashboard');
       final data = response.data;
       
-      List<dynamic> list = data.containsKey('data') ? data['data'] : (data is List ? data : []);
+      // Extraction of unified song list from the data.songs object
+      final resultData = data['data'];
+      List<dynamic> list = resultData != null ? (resultData['songs'] ?? []) : [];
+      
       return list.map((i) => Track.fromJson(i)).toList();
     } catch (e) {
       developer.log('Error fetching tracks: $e');

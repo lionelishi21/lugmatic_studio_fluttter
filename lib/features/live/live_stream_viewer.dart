@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 import 'package:collection/collection.dart';
@@ -38,6 +40,8 @@ class _LiveStreamViewerState extends State<LiveStreamViewer>
 
   Room? _room;
   bool _isConnected = false;
+  bool _hasError = false;
+  String? _errorMessage;
   final List<Map<String, dynamic>> _messages = [];
   int _viewerCount = 0;
   
@@ -89,6 +93,7 @@ class _LiveStreamViewerState extends State<LiveStreamViewer>
   }
 
   Future<void> _connectAsViewer() async {
+    if (mounted) setState(() { _hasError = false; _errorMessage = null; });
     try {
       final tokenData = await _liveService.getStreamToken(widget.streamId);
       final String url = tokenData['url'];
@@ -102,6 +107,7 @@ class _LiveStreamViewerState extends State<LiveStreamViewer>
       if (mounted) setState(() => _isConnected = true);
     } catch (e) {
       print('Viewer connection error: $e');
+      if (mounted) setState(() { _hasError = true; _errorMessage = 'Stream ended or unavailable'; });
     }
   }
 
@@ -203,6 +209,20 @@ class _LiveStreamViewerState extends State<LiveStreamViewer>
 
   @override
   Widget build(BuildContext context) {
+    if (_hasError) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
+            const SizedBox(height: 16),
+            Text(_errorMessage ?? 'Failed to load stream', style: const TextStyle(color: Colors.white)),
+            TextButton(onPressed: _connectAsViewer, child: const Text('Retry')),
+          ],
+        ),
+      );
+    }
+
     if (!_isConnected || _room == null) {
       return const Center(child: CircularProgressIndicator(color: AppColors.primary));
     }
@@ -225,7 +245,19 @@ class _LiveStreamViewerState extends State<LiveStreamViewer>
           Positioned.fill(
             child: track != null 
               ? VideoTrackRenderer(track, fit: VideoViewFit.cover)
-              : Container(color: Colors.black, child: const Center(child: CircularProgressIndicator())),
+              : Container(
+                  color: Colors.black, 
+                  child: const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center, 
+                      children: [
+                        CircularProgressIndicator(), 
+                        SizedBox(height: 16), 
+                        Text('Waiting for host...', style: TextStyle(color: Colors.white54))
+                      ]
+                    )
+                  )
+                ),
           ),
 
         // Dark Gradient Overlay
@@ -337,8 +369,9 @@ class _LiveStreamViewerState extends State<LiveStreamViewer>
           ),
         ),
       ],
-    );
-  }
+    ), // Closing VisibilityDetector
+  );
+}
 
   Widget _buildSideAction(IconData icon, String label, VoidCallback onTap, {Color? color}) {
     return GestureDetector(

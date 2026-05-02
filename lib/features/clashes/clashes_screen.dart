@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/neumorphic_theme.dart';
 import '../../data/services/clash_service.dart';
+import 'package:provider/provider.dart';
+import '../../providers/live_streaming_provider.dart';
+import '../../providers/navigation_provider.dart';
 
 class ClashesScreen extends StatefulWidget {
   const ClashesScreen({super.key});
@@ -407,8 +410,9 @@ class _ClashesScreenState extends State<ClashesScreen> {
 
   Future<void> _joinClash(String clashId) async {
     try {
-      await _clashService.joinScheduledClash(clashId);
+      await context.read<LiveStreamingProvider>().startClashStream(clashId);
       if (mounted) {
+        context.read<NavigationProvider>().setIndex(3); // Navigate to Live tab
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("⚔️ Joined! You're in the clash arena."), backgroundColor: Colors.green),
         );
