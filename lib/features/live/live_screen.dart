@@ -343,7 +343,7 @@ class _LiveScreenState extends State<LiveScreen> with WidgetsBindingObserver {
             // ── 3. Gift alert ─────────────────────────────────────────
             if (provider.lastGift != null)
               Positioned(
-                bottom: 120, left: 16,
+                bottom: MediaQuery.of(context).size.height * 0.18, left: 16,
                 child: TweenAnimationBuilder<double>(
                   tween: Tween(begin: 0.0, end: 1.0),
                   duration: const Duration(milliseconds: 400),
@@ -380,13 +380,13 @@ class _LiveScreenState extends State<LiveScreen> with WidgetsBindingObserver {
 
             // ── 4. Chat messages ──────────────────────────────────────
             Positioned(
-              bottom: 80, left: 12, right: 100,
+              bottom: 72, left: 12, right: 88,
               child: _buildChatMessages(provider),
             ),
 
             // ── 5. Right-side controls ────────────────────────────────
             Positioned(
-              right: 12, bottom: 80,
+              right: 12, bottom: 72,
               child: Column(mainAxisSize: MainAxisSize.min, children: [
                 _controlBtn(
                   provider.isMicOn ? Icons.mic : Icons.mic_off,

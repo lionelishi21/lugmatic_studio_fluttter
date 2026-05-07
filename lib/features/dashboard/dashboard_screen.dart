@@ -345,27 +345,31 @@ class _QuickActions extends StatelessWidget {
     ];
 
     return Row(
-      children: actions.map((a) => Expanded(
-        child: GestureDetector(
-          onTap: a.onTap,
-          child: Container(
-            margin: const EdgeInsets.only(right: 10),
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            decoration: BoxDecoration(
-              color: a.color.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: a.color.withOpacity(0.2)),
+      children: List.generate(actions.length, (i) {
+        final a = actions[i];
+        final isLast = i == actions.length - 1;
+        return Expanded(
+          child: GestureDetector(
+            onTap: a.onTap,
+            child: Container(
+              margin: EdgeInsets.only(right: isLast ? 0 : 10),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(
+                color: a.color.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: a.color.withOpacity(0.18)),
+              ),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                FaIcon(a.icon, size: 18, color: a.color),
+                const SizedBox(height: 6),
+                Text(a.label,
+                    style: TextStyle(
+                        color: a.color, fontSize: 11, fontWeight: FontWeight.bold)),
+              ]),
             ),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              FaIcon(a.icon, size: 18, color: a.color),
-              const SizedBox(height: 6),
-              Text(a.label,
-                  style: TextStyle(
-                      color: a.color, fontSize: 11, fontWeight: FontWeight.bold)),
-            ]),
           ),
-        ),
-      )).toList(),
+        );
+      }),
     );
   }
 }
@@ -417,12 +421,13 @@ class _TrackCard extends StatelessWidget {
       onTap: () => Navigator.push(context,
           MaterialPageRoute(builder: (_) => TrackAnalyticsScreen(track: track))),
       child: Container(
-        width: 130,
+        width: MediaQuery.of(context).size.width * 0.32,
+        constraints: const BoxConstraints(minWidth: 120, maxWidth: 160),
         margin: const EdgeInsets.only(right: 14),
         decoration: BoxDecoration(
           color: AppColors.card,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withOpacity(0.06)),
+          border: Border.all(color: Colors.white.withOpacity(0.07)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
