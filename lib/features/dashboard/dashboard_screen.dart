@@ -11,6 +11,10 @@ import '../../providers/dashboard_provider.dart';
 import '../../data/models/dashboard_models.dart';
 import '../tracks/track_analytics_screen.dart';
 import '../gifts/gifts_screen.dart';
+import '../podcasts/podcasts_screen.dart';
+import '../finance/earnings_screen.dart';
+import '../notifications/notification_list_screen.dart';
+import '../../providers/notification_provider.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -83,35 +87,65 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                _greeting(),
-                                style: const TextStyle(
-                                  color: AppColors.mutedForeground,
-                                  fontSize: 12,
-                                ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Text(
+                                    'Dashboard',
+                                    style: TextStyle(
+                                      color: AppColors.foreground,
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: -0.5,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Welcome back, ${user?['name'] ?? 'Artist'}',
+                                    style: const TextStyle(
+                                      color: AppColors.mutedForeground,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              Text(
-                                artistName,
-                                style: const TextStyle(
-                                  color: AppColors.foreground,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: -0.3,
-                                ),
-                                overflow: TextOverflow.ellipsis,
+                              Consumer<NotificationProvider>(
+                                builder: (context, provider, _) {
+                                  return Stack(
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.notifications_none, color: AppColors.foreground, size: 28),
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(builder: (_) => const NotificationListScreen()),
+                                          );
+                                        },
+                                      ),
+                                      if (provider.unreadCount > 0)
+                                        Positioned(
+                                          right: 8,
+                                          top: 8,
+                                          child: Container(
+                                            padding: const EdgeInsets.all(4),
+                                            decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                                            constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                                            child: Text(
+                                              '${provider.unreadCount}',
+                                              style: const TextStyle(color: Colors.black, fontSize: 8, fontWeight: FontWeight.bold),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  );
+                                },
                               ),
                             ],
                           ),
-                        ),
-                        // Notification bell placeholder
-                        IconButton(
-                          onPressed: () {},
-                          icon: const Icon(FontAwesomeIcons.bell, size: 18),
-                          color: AppColors.mutedForeground,
                         ),
                       ],
                     ),
@@ -135,6 +169,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         stats: dashboard.artistStats,
                         earnings: dashboard.artistEarnings,
                         onTracksTap: () => navProvider.setIndex(1),
+                        onEarningsTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EarningsScreen())),
                       ),
                     if (dashboard.isLoading)
                       const SizedBox(
@@ -264,8 +299,9 @@ class _StatsRow extends StatelessWidget {
   final ArtistStats? stats;
   final ArtistEarnings? earnings;
   final VoidCallback onTracksTap;
+  final VoidCallback onEarningsTap;
 
-  const _StatsRow({this.stats, this.earnings, required this.onTracksTap});
+  const _StatsRow({this.stats, this.earnings, required this.onTracksTap, required this.onEarningsTap});
 
   @override
   Widget build(BuildContext context) {
@@ -287,7 +323,17 @@ class _StatsRow extends StatelessWidget {
         border: Border.all(color: Colors.white.withOpacity(0.06)),
       ),
       child: Row(
-        children: items.map((item) => Expanded(child: _StatCell(data: item))).toList(),
+        children: [
+          Expanded(child: _StatCell(data: items[0])),
+          Expanded(child: _StatCell(data: items[1])),
+          Expanded(child: _StatCell(data: items[2])),
+          Expanded(
+            child: GestureDetector(
+              onTap: onEarningsTap,
+              child: _StatCell(data: items[3]),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -340,8 +386,8 @@ class _QuickActions extends StatelessWidget {
     final actions = [
       _QuickAction('Clash',   FontAwesomeIcons.swords,    const Color(0xFFFF6B6B), () => navProvider.setIndex(3)),
       _QuickAction('Tracks',  FontAwesomeIcons.music,     AppColors.primary,       () => navProvider.setIndex(1)),
+      _QuickAction('Podcasts', FontAwesomeIcons.microphone, const Color(0xFF7B6FFF), () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PodcastsScreen()))),
       _QuickAction('Gifts',   FontAwesomeIcons.gift,      const Color(0xFFFFB347), () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const GiftsScreen()))),
-      _QuickAction('Profile', FontAwesomeIcons.user,      const Color(0xFF7B6FFF), () => navProvider.setIndex(4)),
     ];
 
     return Row(

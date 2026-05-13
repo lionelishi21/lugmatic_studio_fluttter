@@ -5,6 +5,8 @@ import '../../core/theme/neumorphic_theme.dart';
 import '../../providers/auth_provider.dart';
 import 'profile_editor_screen.dart';
 import 'payout_settings_screen.dart';
+import '../notifications/notification_list_screen.dart';
+import '../support/support_screen.dart';
 
 class AccountScreen extends StatelessWidget {
   const AccountScreen({super.key});
@@ -111,12 +113,22 @@ class AccountScreen extends StatelessWidget {
                 _buildMenuItem(
                   icon: Icons.notifications_outlined,
                   label: 'Notifications',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const NotificationListScreen()),
+                    );
+                  },
                 ),
                 _buildMenuItem(
                   icon: Icons.help_outline,
                   label: 'Help & Support',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const SupportScreen()),
+                    );
+                  },
                 ),
 
                 const SizedBox(height: 32),

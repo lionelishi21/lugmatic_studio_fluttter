@@ -8,6 +8,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/track_provider.dart';
 import '../../data/models/track_model.dart';
 import 'track_analytics_screen.dart';
+import 'upload_track_screen.dart';
 
 class TracksListScreen extends StatefulWidget {
   const TracksListScreen({super.key});
@@ -129,6 +130,17 @@ class _TracksListScreenState extends State<TracksListScreen> {
             ],
           ),
         ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const UploadTrackScreen()),
+          );
+        },
+        backgroundColor: AppColors.primary,
+        icon: const Icon(Icons.cloud_upload_outlined, color: Colors.black),
+        label: const Text('UPLOAD', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
       ),
     );
   }

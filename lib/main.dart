@@ -6,6 +6,8 @@ import 'providers/dashboard_provider.dart';
 import 'providers/live_streaming_provider.dart';
 import 'providers/track_provider.dart';
 import 'providers/navigation_provider.dart';
+import 'providers/podcast_provider.dart';
+import 'providers/notification_provider.dart';
 import 'features/auth/login_screen.dart';
 import 'features/navigation/main_nav_screen.dart';
 
@@ -18,6 +20,8 @@ void main() {
         ChangeNotifierProvider(create: (_) => LiveStreamingProvider()),
         ChangeNotifierProvider(create: (_) => TrackProvider()),
         ChangeNotifierProvider(create: (_) => NavigationProvider()),
+        ChangeNotifierProvider(create: (_) => PodcastProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
       ],
       child: const LugmaticArtistApp(),
     ),
