@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/neumorphic_theme.dart';
 import '../../providers/auth_provider.dart';
@@ -235,7 +236,36 @@ class _TracksListScreenState extends State<TracksListScreen> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                const Icon(Icons.chevron_right, color: AppColors.mutedForeground, size: 20),
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert, color: AppColors.mutedForeground, size: 20),
+                  color: const Color(0xFF1A1A2E),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  onSelected: (value) {
+                    if (value == 'analytics') {
+                      Navigator.push(context, MaterialPageRoute(
+                        builder: (_) => TrackAnalyticsScreen(track: track),
+                      ));
+                    } else if (value == 'share') {
+                      final url = 'https://studio.lugmaticmusic.com/share/song/${track.id}';
+                      Share.share(
+                        'Listen to "${track.title}" on Lugmatic 🎵\n$url',
+                        subject: track.title,
+                      );
+                    }
+                  },
+                  itemBuilder: (_) => [
+                    const PopupMenuItem(value: 'analytics', child: Row(children: [
+                      Icon(Icons.bar_chart, size: 16, color: Colors.white70),
+                      SizedBox(width: 10),
+                      Text('Analytics', style: TextStyle(color: Colors.white, fontSize: 13)),
+                    ])),
+                    const PopupMenuItem(value: 'share', child: Row(children: [
+                      Icon(Icons.share_rounded, size: 16, color: Color(0xFF10B981)),
+                      SizedBox(width: 10),
+                      Text('Share', style: TextStyle(color: Colors.white, fontSize: 13)),
+                    ])),
+                  ],
+                ),
               ],
             ),
           ],

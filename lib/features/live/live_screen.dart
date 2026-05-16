@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
@@ -335,6 +336,23 @@ class _LiveScreenState extends State<LiveScreen> with WidgetsBindingObserver {
                     decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(20)),
                     child: Text('${provider.totalCoins} 🪙',
                         style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13)),
+                  ),
+                  const SizedBox(width: 8),
+                  // Share live stream
+                  GestureDetector(
+                    onTap: () {
+                      if (provider.streamId == null) return;
+                      final url = 'https://studio.lugmaticmusic.com/share/stream/${provider.streamId}';
+                      Share.share(
+                        '🎵 I\'m live on Lugmatic! Tune in now:\n$url',
+                        subject: 'Watch me live on Lugmatic',
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(20)),
+                      child: const Icon(Icons.share_rounded, color: Colors.white, size: 16),
+                    ),
                   ),
                 ]),
               ),
