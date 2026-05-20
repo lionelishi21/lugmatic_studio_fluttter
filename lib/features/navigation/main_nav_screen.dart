@@ -9,6 +9,7 @@ import '../clashes/clashes_screen.dart';
 import '../gifts/gifts_screen.dart';
 import '../account/account_screen.dart';
 import '../tracks/tracks_list_screen.dart';
+import '../messages/messages_screen.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/live_streaming_provider.dart';
 import '../../providers/navigation_provider.dart';
@@ -24,13 +25,14 @@ class _MainNavScreenState extends State<MainNavScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _liveGlowController;
 
-  // Tabs: Home | Tracks | [LIVE - center] | Clashes | Profile
+  // Tabs: Home | Tracks | [LIVE - center] | Clashes | Messages | Profile
   // Gifts are accessible from the Profile/Account tab
   final List<Widget> _screens = const [
     DashboardScreen(),
     TracksListScreen(),
     LiveScreen(),       // index 2 = Live (center button)
     ClashesScreen(),
+    MessagesScreen(),
     AccountScreen(),
   ];
 
@@ -117,8 +119,8 @@ class _BottomNav extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          _NavItem(icon: FontAwesomeIcons.house,   label: 'Home',    index: 0, current: currentIndex, onTap: onTap),
-          _NavItem(icon: FontAwesomeIcons.music,   label: 'Tracks',  index: 1, current: currentIndex, onTap: onTap),
+          _NavItem(icon: FontAwesomeIcons.house,   label: 'Home',     index: 0, current: currentIndex, onTap: onTap),
+          _NavItem(icon: FontAwesomeIcons.music,   label: 'Tracks',   index: 1, current: currentIndex, onTap: onTap),
 
           // ── Centre LIVE button ──
           _LiveButton(
@@ -128,8 +130,9 @@ class _BottomNav extends StatelessWidget {
             onTap: () => onTap(2),
           ),
 
-          _NavItem(icon: FontAwesomeIcons.swords,  label: 'Clashes', index: 3, current: currentIndex, onTap: onTap),
-          _NavItem(icon: FontAwesomeIcons.user,    label: 'Profile', index: 4, current: currentIndex, onTap: onTap),
+          _NavItem(icon: FontAwesomeIcons.fire,    label: 'Clashes',  index: 3, current: currentIndex, onTap: onTap),
+          _NavItem(icon: Icons.message_outlined,   label: 'Messages', index: 4, current: currentIndex, onTap: onTap, useRegularIcon: true, activeIcon: Icons.message),
+          _NavItem(icon: FontAwesomeIcons.user,    label: 'Profile',  index: 5, current: currentIndex, onTap: onTap),
         ],
       ),
     );
@@ -142,6 +145,10 @@ class _NavItem extends StatelessWidget {
   final int index;
   final int current;
   final ValueChanged<int> onTap;
+  /// When true, renders a Material [Icon] instead of [FaIcon].
+  final bool useRegularIcon;
+  /// Optional active-state icon (only used when [useRegularIcon] is true).
+  final IconData? activeIcon;
 
   const _NavItem({
     required this.icon,
@@ -149,11 +156,15 @@ class _NavItem extends StatelessWidget {
     required this.index,
     required this.current,
     required this.onTap,
+    this.useRegularIcon = false,
+    this.activeIcon,
   });
 
   @override
   Widget build(BuildContext context) {
     final active = index == current;
+    final resolvedIcon = (active && activeIcon != null) ? activeIcon! : icon;
+
     return GestureDetector(
       onTap: () => onTap(index),
       behavior: HitTestBehavior.opaque,
@@ -170,11 +181,17 @@ class _NavItem extends StatelessWidget {
                 color: active ? AppColors.primary.withOpacity(0.12) : Colors.transparent,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: FaIcon(
-                icon,
-                size: 18,
-                color: active ? AppColors.primary : const Color(0xFF5A5A6E),
-              ),
+              child: useRegularIcon
+                  ? Icon(
+                      resolvedIcon,
+                      size: 20,
+                      color: active ? AppColors.primary : const Color(0xFF5A5A6E),
+                    )
+                  : FaIcon(
+                      icon,
+                      size: 18,
+                      color: active ? AppColors.primary : const Color(0xFF5A5A6E),
+                    ),
             ),
             const SizedBox(height: 3),
             Text(

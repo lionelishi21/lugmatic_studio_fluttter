@@ -240,7 +240,7 @@ class _TracksListScreenState extends State<TracksListScreen> {
                   icon: const Icon(Icons.more_vert, color: AppColors.mutedForeground, size: 20),
                   color: const Color(0xFF1A1A2E),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  onSelected: (value) {
+                  onSelected: (value) async {
                     if (value == 'analytics') {
                       Navigator.push(context, MaterialPageRoute(
                         builder: (_) => TrackAnalyticsScreen(track: track),
@@ -248,9 +248,34 @@ class _TracksListScreenState extends State<TracksListScreen> {
                     } else if (value == 'share') {
                       final url = 'https://studio.lugmaticmusic.com/share/song/${track.id}';
                       Share.share(
-                        'Listen to "${track.title}" on Lugmatic 🎵\n$url',
-                        subject: track.title,
+                        'Listen to "${track.name}" on Lugmatic 🎵\n$url',
+                        subject: track.name,
                       );
+                    } else if (value == 'delete') {
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (_) => AlertDialog(
+                          backgroundColor: const Color(0xFF1A1A2E),
+                          title: const Text('Delete Track', style: TextStyle(color: Colors.white)),
+                          content: Text('Delete "${track.name}"? This cannot be undone.', style: const TextStyle(color: Colors.white70)),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+                            TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete', style: TextStyle(color: Colors.redAccent))),
+                          ],
+                        ),
+                      );
+                      if (confirmed == true) {
+                        try {
+                          await context.read<TrackProvider>().deleteTrack(track.id);
+                          if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Track deleted'), backgroundColor: Colors.red),
+                          );
+                        } catch (e) {
+                          if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Failed to delete: $e')),
+                          );
+                        }
+                      }
                     }
                   },
                   itemBuilder: (_) => [
@@ -263,6 +288,11 @@ class _TracksListScreenState extends State<TracksListScreen> {
                       Icon(Icons.share_rounded, size: 16, color: Color(0xFF10B981)),
                       SizedBox(width: 10),
                       Text('Share', style: TextStyle(color: Colors.white, fontSize: 13)),
+                    ])),
+                    const PopupMenuItem(value: 'delete', child: Row(children: [
+                      Icon(Icons.delete_outline, size: 16, color: Colors.redAccent),
+                      SizedBox(width: 10),
+                      Text('Delete', style: TextStyle(color: Colors.redAccent, fontSize: 13)),
                     ])),
                   ],
                 ),
