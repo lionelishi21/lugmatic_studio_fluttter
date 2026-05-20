@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:dio/dio.dart';
 import 'core/theme/app_theme.dart';
+import 'core/api/api_client.dart';
 import 'providers/auth_provider.dart';
 import 'providers/dashboard_provider.dart';
 import 'providers/live_streaming_provider.dart';
@@ -8,10 +12,27 @@ import 'providers/track_provider.dart';
 import 'providers/navigation_provider.dart';
 import 'providers/podcast_provider.dart';
 import 'providers/notification_provider.dart';
+import 'data/services/fcm_service.dart';
 import 'features/auth/login_screen.dart';
 import 'features/navigation/main_nav_screen.dart';
 
-void main() {
+// Top-level FCM background handler — must be outside any class
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  debugPrint('FCM background: ${message.notification?.title}');
+}
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialise Firebase
+  await Firebase.initializeApp();
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // Kick off FCM token registration (non-blocking)
+  final dio = Dio(BaseOptions(baseUrl: ApiClient.baseUrl));
+  FcmService(apiClient: dio).init();
+
   runApp(
     MultiProvider(
       providers: [
@@ -39,14 +60,12 @@ class LugmaticArtistApp extends StatelessWidget {
       theme: AppTheme.darkTheme,
       home: Consumer<AuthProvider>(
         builder: (context, auth, _) {
-          if (auth.isAuthenticated) {
-            return const MainNavScreen();
-          }
+          if (auth.isAuthenticated) return const MainNavScreen();
           return const LoginScreen();
         },
       ),
       routes: {
-        '/login': (context) => const LoginScreen(),
+        '/login':     (context) => const LoginScreen(),
         '/dashboard': (context) => const MainNavScreen(),
       },
     );
