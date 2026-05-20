@@ -10,6 +10,7 @@ import '../../providers/track_provider.dart';
 import '../../data/models/track_model.dart';
 import 'track_analytics_screen.dart';
 import 'upload_track_screen.dart';
+import '../search/search_screen.dart';
 
 class TracksListScreen extends StatefulWidget {
   const TracksListScreen({super.key});
@@ -47,22 +48,42 @@ class _TracksListScreenState extends State<TracksListScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'My Library',
-                      style: TextStyle(
-                        color: AppColors.foreground,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Manage your tracks and view performance',
-                      style: TextStyle(
-                        color: AppColors.mutedForeground,
-                        fontSize: 14,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'My Library',
+                                style: TextStyle(
+                                  color: AppColors.foreground,
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Manage your tracks and view performance',
+                                style: TextStyle(
+                                  color: AppColors.mutedForeground,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.search, color: AppColors.foreground, size: 24),
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const SearchScreen()),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

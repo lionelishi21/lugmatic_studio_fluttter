@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/neumorphic_theme.dart';
 import '../../data/services/clash_service.dart';
 import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/live_streaming_provider.dart';
 import '../../providers/navigation_provider.dart';
 
@@ -224,6 +226,15 @@ class _ClashesScreenState extends State<ClashesScreen> {
     final opponent = clash['opponent'];
     final clashId = clash['_id']?.toString() ?? '';
 
+    // Detect if the logged-in artist is a participant in this clash
+    final myArtistId = context.read<AuthProvider>().user?['artistId']?.toString()
+        ?? context.read<AuthProvider>().user?['_id']?.toString()
+        ?? '';
+    final challengerId = challenger?['_id']?.toString() ?? '';
+    final opponentId = opponent?['_id']?.toString() ?? '';
+    final isParticipant = myArtistId.isNotEmpty &&
+        (myArtistId == challengerId || myArtistId == opponentId);
+
     final now = DateTime.now();
     final isLive = status == 'active';
     final minsUntil = scheduledAt != null ? scheduledAt.difference(now).inMinutes : null;
@@ -322,33 +333,63 @@ class _ClashesScreenState extends State<ClashesScreen> {
             ),
           ),
 
-          // Join button
+          // Action button: participant → Join / Watch Live for spectators
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: SizedBox(
-              width: double.infinity,
-              height: 44,
-              child: ElevatedButton(
-                onPressed: canJoin ? () => _joinClash(clashId) : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isLive ? Colors.redAccent : AppColors.primary,
-                  foregroundColor: Colors.black,
-                  disabledBackgroundColor: AppColors.card,
-                  disabledForegroundColor: AppColors.mutedForeground,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: Text(
-                  isLive
-                      ? '⚔️  Join Live Clash'
-                      : canJoin
-                          ? "✅  I'm Ready — Join"
-                          : countdownStr.isNotEmpty
-                              ? 'Opens in $countdownStr'
-                              : 'Upcoming',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
+            child: isParticipant
+                // ── Participant: existing Join flow ──
+                ? SizedBox(
+                    width: double.infinity,
+                    height: 44,
+                    child: ElevatedButton(
+                      onPressed: canJoin ? () => _joinClash(clashId) : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isLive ? Colors.redAccent : AppColors.primary,
+                        foregroundColor: Colors.black,
+                        disabledBackgroundColor: AppColors.card,
+                        disabledForegroundColor: AppColors.mutedForeground,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: Text(
+                        isLive
+                            ? '⚔️  Join Live Clash'
+                            : canJoin
+                                ? "✅  I'm Ready — Join"
+                                : countdownStr.isNotEmpty
+                                    ? 'Opens in $countdownStr'
+                                    : 'Upcoming',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  )
+                // ── Non-participant: Watch Live (only if clash is active) ──
+                : SizedBox(
+                    width: double.infinity,
+                    height: 44,
+                    child: isLive
+                        ? ElevatedButton.icon(
+                            onPressed: () => _watchLive(clashId),
+                            icon: const Icon(Icons.play_circle_outline, size: 18),
+                            label: const Text('Watch Live', style: TextStyle(fontWeight: FontWeight.bold)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.redAccent,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          )
+                        : OutlinedButton(
+                            onPressed: null,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.mutedForeground,
+                              side: const BorderSide(color: AppColors.border),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: Text(
+                              countdownStr.isNotEmpty ? 'Starts in $countdownStr' : 'Upcoming',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                  ),
           ),
         ],
       ),
@@ -425,6 +466,19 @@ class _ClashesScreenState extends State<ClashesScreen> {
             content: Text(e.toString().replaceAll('Exception:', '').trim()),
             backgroundColor: Colors.redAccent,
           ),
+        );
+      }
+    }
+  }
+
+  Future<void> _watchLive(String clashId) async {
+    final uri = Uri.parse('https://studio.lugmaticmusic.com/share/stream/$clashId');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open stream link'), backgroundColor: Colors.redAccent),
         );
       }
     }

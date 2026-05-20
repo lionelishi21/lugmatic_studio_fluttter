@@ -14,6 +14,7 @@ import '../gifts/gifts_screen.dart';
 import '../podcasts/podcasts_screen.dart';
 import '../finance/earnings_screen.dart';
 import '../notifications/notification_list_screen.dart';
+import '../billboard/billboard_screen.dart';
 import '../../providers/notification_provider.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -104,7 +105,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                   ),
                                   Text(
-                                    'Welcome back, ${user?['name'] ?? 'Artist'}',
+                                    'Welcome back, ${auth.user?['name'] ?? 'Artist'}',
                                     style: const TextStyle(
                                       color: AppColors.mutedForeground,
                                       fontSize: 12,
@@ -161,7 +162,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                     // ── Go Live banner ─────────────────────────────
                     _GoLiveBanner(onTap: () => navProvider.setIndex(2)),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 14),
+
+                    // ── Billboard shortcut ─────────────────────────
+                    _BillboardBanner(onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const BillboardScreen()),
+                    )),
+                    const SizedBox(height: 14),
 
                     // ── Stats row ──────────────────────────────────
                     if (!dashboard.isLoading)
@@ -295,6 +303,59 @@ class _GoLiveBanner extends StatelessWidget {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+class _BillboardBanner extends StatelessWidget {
+  final VoidCallback onTap;
+  const _BillboardBanner({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF0D2117), Color(0xFF071A0E)],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFF34D399).withOpacity(0.25)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF34D399).withOpacity(0.12),
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFF34D399).withOpacity(0.3)),
+              ),
+              child: const Icon(Icons.emoji_events_rounded, color: Color(0xFF34D399), size: 20),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Billboard Charts',
+                      style: TextStyle(color: AppColors.foreground, fontSize: 14, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 2),
+                  Text('See top tracks this week',
+                      style: TextStyle(color: AppColors.mutedForeground, fontSize: 12)),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Color(0xFF34D399), size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _StatsRow extends StatelessWidget {
   final ArtistStats? stats;
   final ArtistEarnings? earnings;
@@ -384,7 +445,7 @@ class _QuickActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final actions = [
-      _QuickAction('Clash',   FontAwesomeIcons.swords,    const Color(0xFFFF6B6B), () => navProvider.setIndex(3)),
+      _QuickAction('Clash',   FontAwesomeIcons.fire,    const Color(0xFFFF6B6B), () => navProvider.setIndex(3)),
       _QuickAction('Tracks',  FontAwesomeIcons.music,     AppColors.primary,       () => navProvider.setIndex(1)),
       _QuickAction('Podcasts', FontAwesomeIcons.microphone, const Color(0xFF7B6FFF), () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PodcastsScreen()))),
       _QuickAction('Gifts',   FontAwesomeIcons.gift,      const Color(0xFFFFB347), () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const GiftsScreen()))),
@@ -559,8 +620,9 @@ class _ActivityItem extends StatelessWidget {
                 style: const TextStyle(color: AppColors.foreground, fontSize: 13, fontWeight: FontWeight.w600),
                 maxLines: 1, overflow: TextOverflow.ellipsis),
             const SizedBox(height: 2),
-            Text(DateFormat.yMMMd().format(transaction.date),
-                style: const TextStyle(color: AppColors.mutedForeground, fontSize: 11)),
+            Text(DateFormat.yMMMd().format(transaction.createdAt),
+              style: const TextStyle(color: AppColors.mutedForeground, fontSize: 12),
+            ),
           ]),
         ),
         Text(
