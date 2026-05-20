@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "518032014474",
+    "project_id": "lugmatic-fe310",
+    "storage_bucket": "lugmatic-fe310.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:518032014474:android:4029956832156d91cec173",
+        "android_client_info": {
+          "package_name": "com.lugmatic.lugmatic"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDq-WNETC5gu9SqeJ92UpRNR6qmvU2ptSU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
