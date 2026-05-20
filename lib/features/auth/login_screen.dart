@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../../core/api/api_client.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
+import '../navigation/main_nav_screen.dart';
+import '../onboarding/artist_onboarding_screen.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -28,10 +31,31 @@ class _LoginScreenState extends State<LoginScreen> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     try {
       await authProvider.login(_emailController.text, _passwordController.text);
-      if (mounted) {
-        // Navigate to Dashboard
-        Navigator.pushReplacementNamed(context, '/dashboard');
+      if (!mounted) return;
+
+      // Check onboarding status — redirect to wizard if not approved
+      try {
+        final apiClient = ApiClient();
+        final res = await apiClient.dio.get('/onboarding/status');
+        final data = res.data is Map ? (res.data['data'] ?? res.data) : res.data;
+        final status = data['verificationStatus'] ?? 'not_submitted';
+        if (!mounted) return;
+        if (status != 'approved') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const ArtistOnboardingScreen()),
+          );
+          return;
+        }
+      } catch (_) {
+        // Silently ignore status check errors — proceed to main nav
       }
+
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MainNavScreen()),
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
