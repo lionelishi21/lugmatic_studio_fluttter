@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../../core/api/api_client.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
@@ -25,6 +26,56 @@ class _LoginScreenState extends State<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _navigateAfterAuth() async {
+    try {
+      final apiClient = ApiClient();
+      final res = await apiClient.dio.get('/onboarding/status');
+      final data = res.data is Map ? (res.data['data'] ?? res.data) : res.data;
+      final status = data['verificationStatus'] ?? 'not_submitted';
+      if (!mounted) return;
+      if (status != 'approved') {
+        Navigator.pushReplacement(context,
+            MaterialPageRoute(builder: (_) => const ArtistOnboardingScreen()));
+        return;
+      }
+    } catch (_) {}
+    if (!mounted) return;
+    Navigator.pushReplacement(context,
+        MaterialPageRoute(builder: (_) => const MainNavScreen()));
+  }
+
+  Future<void> _signInWithGoogle() async {
+    try {
+      final googleSignIn = GoogleSignIn(
+        serverClientId: '952677583974-d5ao7s59okc1r97sjv08np687srrqduc.apps.googleusercontent.com',
+      );
+      final googleUser = await googleSignIn.signIn();
+      if (googleUser == null) return;
+
+      final googleAuth = await googleUser.authentication;
+      final idToken = googleAuth.idToken;
+      if (idToken == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Google sign-in failed: no ID token'),
+          backgroundColor: Colors.redAccent,
+        ));
+        return;
+      }
+
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      await auth.loginWithGoogle(idToken);
+      if (!mounted) return;
+      await _navigateAfterAuth();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Google sign-in failed: ${e.toString()}'),
+        backgroundColor: Colors.redAccent,
+      ));
+    }
   }
 
   void _handleLogin() async {
@@ -223,7 +274,40 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                   
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 20),
+
+                  // ── Divider ───────────────────────────────────────
+                  Row(children: [
+                    const Expanded(child: Divider(color: Colors.white12)),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Text('or', style: TextStyle(color: Colors.white38, fontSize: 13)),
+                    ),
+                    const Expanded(child: Divider(color: Colors.white12)),
+                  ]),
+
+                  const SizedBox(height: 16),
+
+                  // ── Google Sign-In ────────────────────────────────
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: OutlinedButton.icon(
+                      onPressed: _signInWithGoogle,
+                      icon: const Icon(FontAwesomeIcons.google, size: 18, color: Colors.white),
+                      label: const Text(
+                        'Continue with Google',
+                        style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.white24),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        backgroundColor: Colors.white.withOpacity(0.04),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 28),
 
                   // Register link
                   Row(

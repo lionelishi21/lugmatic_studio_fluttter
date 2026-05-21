@@ -24,4 +24,16 @@ class AuthService {
       rethrow;
     }
   }
+
+  Future<Map<String, dynamic>> loginWithGoogle(String idToken) async {
+    try {
+      final response = await _apiClient.dio.post('/auth/google', data: {
+        'idToken': idToken,
+        'deviceType': 'mobile',
+      });
+      return response.data['data'];
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

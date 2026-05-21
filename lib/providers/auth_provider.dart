@@ -55,6 +55,25 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> loginWithGoogle(String idToken) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final data = await _authService.loginWithGoogle(idToken);
+      _token = data['accessToken'];
+      _user = data['user'];
+      await _storage.write(key: 'accessToken', value: _token);
+      await _storage.write(key: 'refreshToken', value: data['refreshToken'] ?? '');
+      SocketService().connect();
+      notifyListeners();
+    } catch (e) {
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> logout() async {
     _token = null;
     _user = null;
