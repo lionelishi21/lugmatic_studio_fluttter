@@ -9,6 +9,7 @@ class Track {
   final DateTime createdAt;
   final double? share;
   final String? role;
+  final String? videoUrl;
 
   Track({
     required this.id,
@@ -21,6 +22,7 @@ class Track {
     required this.createdAt,
     this.share,
     this.role,
+    this.videoUrl,
   });
 
   factory Track.fromJson(Map<String, dynamic> json) {
@@ -35,6 +37,7 @@ class Track {
       createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
       share: json['share'] != null ? (json['share'] as num).toDouble() : null,
       role: json['role'],
+      videoUrl: json['videoUrl'] as String?,
     );
   }
 }

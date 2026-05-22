@@ -51,4 +51,49 @@ class UploadService {
       rethrow;
     }
   }
+
+  Future<Map<String, dynamic>> getPresignedUrl({
+    required String type, // 'music-video', 'song-audio', 'cover-art'
+    required String filename,
+    required String contentType,
+  }) async {
+    final response = await _apiClient.dio.post('/upload/presign/$type', data: {
+      'filename': filename,
+      'contentType': contentType,
+    });
+    return (response.data['data'] ?? response.data) as Map<String, dynamic>;
+  }
+
+  Future<void> uploadToS3({
+    required String uploadUrl,
+    required List<int> fileBytes,
+    required String contentType,
+    void Function(double progress)? onProgress,
+  }) async {
+    // Use a separate Dio instance WITHOUT auth headers for S3 PUT
+    final s3Dio = Dio();
+    await s3Dio.put(
+      uploadUrl,
+      data: Stream.fromIterable(fileBytes.map((b) => [b])),
+      options: Options(
+        headers: {
+          'Content-Type': contentType,
+          'Content-Length': fileBytes.length,
+        },
+      ),
+      onSendProgress: onProgress != null
+          ? (sent, total) => onProgress(total > 0 ? sent / total : 0)
+          : null,
+    );
+  }
+
+  Future<String> generateLyrics(String songId) async {
+    final response = await _apiClient.dio.post('/song/$songId/generate-lyrics');
+    final data = (response.data['data'] ?? response.data) as Map<String, dynamic>;
+    return data['lyrics'] as String? ?? '';
+  }
+
+  Future<void> updateSongLyrics(String songId, String lyrics) async {
+    await _apiClient.dio.put('/song/update/$songId', data: {'lyrics': lyrics});
+  }
 }

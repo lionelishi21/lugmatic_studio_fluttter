@@ -31,6 +31,12 @@ class _UploadTrackScreenState extends State<UploadTrackScreen> {
   bool _isUploading = false;
   double _uploadProgress = 0;
 
+  PlatformFile? _selectedVideo;
+  double _videoUploadProgress = 0;
+  String? _createdSongId;
+  bool _generatingLyrics = false;
+  String _generatedLyrics = '';
+
   @override
   void initState() {
     super.initState();
@@ -73,6 +79,13 @@ class _UploadTrackScreenState extends State<UploadTrackScreen> {
     }
   }
 
+  Future<void> _pickVideo() async {
+    final result = await FilePicker.platform.pickFiles(type: FileType.video);
+    if (result != null) {
+      setState(() => _selectedVideo = result.files.first);
+    }
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate() || _selectedFile == null || _selectedCover == null || _selectedGenreId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -87,23 +100,53 @@ class _UploadTrackScreenState extends State<UploadTrackScreen> {
     });
 
     try {
-      await _uploadService.uploadContent(
+      String? videoFileKey;
+
+      // Upload video to S3 via presigned URL if selected
+      if (_selectedVideo != null) {
+        final videoBytes = _selectedVideo!.bytes ?? await File(_selectedVideo!.path!).readAsBytes();
+        final videoPresign = await _uploadService.getPresignedUrl(
+          type: 'music-video',
+          filename: _selectedVideo!.name,
+          contentType: 'video/mp4',
+        );
+        await _uploadService.uploadToS3(
+          uploadUrl: videoPresign['uploadUrl'] as String,
+          fileBytes: videoBytes,
+          contentType: 'video/mp4',
+          onProgress: (p) => setState(() => _videoUploadProgress = p),
+        );
+        videoFileKey = videoPresign['key'] as String?;
+      }
+
+      final result = await _uploadService.uploadContent(
         file: _selectedFile!,
         coverArt: _selectedCover!,
         title: _titleController.text.trim(),
         type: _selectedType,
         genreId: _selectedGenreId!,
         description: _descriptionController.text.trim(),
+        videoFileKey: videoFileKey,
         onProgress: (progress) {
           setState(() => _uploadProgress = progress);
         },
       );
 
+      final returnedSongId = result['_id'] as String? ?? result['id'] as String?;
+
       if (mounted) {
+        setState(() {
+          _isUploading = false;
+          _createdSongId = returnedSongId;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Content uploaded successfully! It is now pending review.')),
         );
-        Navigator.pop(context);
+        if (_selectedType == 'song' && returnedSongId != null) {
+          _showLyricsBanner();
+        } else {
+          Navigator.pop(context);
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -113,6 +156,161 @@ class _UploadTrackScreenState extends State<UploadTrackScreen> {
         );
       }
     }
+  }
+
+  void _showLyricsBanner() {
+    ScaffoldMessenger.of(context).showMaterialBanner(
+      MaterialBanner(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        content: const Text(
+          'Generate lyrics with AI based on your genre and title',
+          style: TextStyle(fontWeight: FontWeight.w500),
+        ),
+        leading: const Text('✨', style: TextStyle(fontSize: 20)),
+        backgroundColor: AppColors.card,
+        actions: [
+          TextButton(
+            onPressed: () {
+              ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
+              Navigator.pop(context);
+            },
+            child: const Text('Skip'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.black,
+            ),
+            onPressed: () async {
+              ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
+              await _generateAndShowLyrics();
+            },
+            child: _generatingLyrics
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                  )
+                : const Text('Generate Lyrics'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _generateAndShowLyrics() async {
+    if (_createdSongId == null) return;
+    setState(() => _generatingLyrics = true);
+    try {
+      final lyrics = await _uploadService.generateLyrics(_createdSongId!);
+      setState(() {
+        _generatingLyrics = false;
+        _generatedLyrics = lyrics;
+      });
+      if (mounted) _showLyricsBottomSheet(lyrics);
+    } catch (e) {
+      setState(() => _generatingLyrics = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to generate lyrics: $e')),
+        );
+        Navigator.pop(context);
+      }
+    }
+  }
+
+  void _showLyricsBottomSheet(String initialLyrics) {
+    final lyricsController = TextEditingController(text: initialLyrics);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.card,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 24,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Text('✨', style: TextStyle(fontSize: 20)),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'AI Generated Lyrics',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Edit the lyrics below before saving.',
+                style: TextStyle(color: AppColors.mutedForeground, fontSize: 13),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: lyricsController,
+                maxLines: 12,
+                style: const TextStyle(color: AppColors.foreground, fontSize: 14),
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: AppColors.background,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  hintText: 'Lyrics will appear here...',
+                  hintStyle: const TextStyle(color: AppColors.mutedForeground),
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: () async {
+                    final edited = lyricsController.text;
+                    try {
+                      await _uploadService.updateSongLyrics(_createdSongId!, edited);
+                      if (ctx.mounted) {
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Lyrics saved successfully!')),
+                        );
+                        Navigator.pop(context);
+                      }
+                    } catch (e) {
+                      if (ctx.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to save lyrics: $e')),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text('Save Lyrics', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    ).whenComplete(() {
+      lyricsController.dispose();
+      if (_createdSongId != null && mounted) Navigator.pop(context);
+    });
   }
 
   @override
@@ -336,7 +534,7 @@ class _UploadTrackScreenState extends State<UploadTrackScreen> {
           maxLines: maxLines,
           validator: validator,
           style: const TextStyle(color: AppColors.foreground),
-          decoration: NeumorphicTheme.neumorphicInputDecoration(hint: hint),
+          decoration: NeumorphicTheme.neumorphicInputDecoration(label: 'Field', hint: hint),
         ),
       ],
     );
