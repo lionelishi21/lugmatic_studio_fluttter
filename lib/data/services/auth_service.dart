@@ -30,6 +30,7 @@ class AuthService {
       final response = await _apiClient.dio.post('/auth/google', data: {
         'idToken': idToken,
         'deviceType': 'mobile',
+        'role': 'artist',
       });
       return response.data['data'];
     } catch (e) {
