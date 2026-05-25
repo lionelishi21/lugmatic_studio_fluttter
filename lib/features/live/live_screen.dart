@@ -213,6 +213,7 @@ class _LiveScreenState extends State<LiveScreen> with WidgetsBindingObserver {
               style: const TextStyle(color: AppColors.foreground),
               decoration: NeumorphicTheme.neumorphicInputDecoration(
                 label: 'Category',
+                hint: 'Select a category',
                 prefixIcon: Icons.category_outlined,
               ),
               items: _categories.map((c) => DropdownMenuItem(

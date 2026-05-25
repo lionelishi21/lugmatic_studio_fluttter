@@ -1,0 +1,116 @@
+Running Gradle task 'assembleRelease'...                        
+lib/features/live/live_stream_viewer.dart:216:30: Error: Can't find ')' to match '('.
+    return VisibilityDetector(
+                             ^
+lib/features/dashboard/dashboard_screen.dart:202:26: Error: Type 'ArtistStats' not found.
+  Widget _buildStatsGrid(ArtistStats? stats, ArtistEarnings? earnings, NavigationProvider navProvider) {
+                         ^^^^^^^^^^^
+lib/features/dashboard/dashboard_screen.dart:202:46: Error: Type 'ArtistEarnings' not found.
+  Widget _buildStatsGrid(ArtistStats? stats, ArtistEarnings? earnings, NavigationProvider navProvider) {
+                                             ^^^^^^^^^^^^^^
+lib/features/dashboard/dashboard_screen.dart:361:35: Error: Type 'Transaction' not found.
+  Widget _buildRecentActivityItem(Transaction transaction) {
+                                  ^^^^^^^^^^^
+lib/features/dashboard/dashboard_screen.dart:28:22: Error: 'DashboardProvider' isn't a type.
+        context.read<DashboardProvider>().fetchDashboardData(id);
+                     ^^^^^^^^^^^^^^^^^
+lib/features/dashboard/dashboard_screen.dart:42:42: Error: 'DashboardProvider' isn't a type.
+          child: Consumer3<AuthProvider, DashboardProvider, TrackProvider>(
+                                         ^^^^^^^^^^^^^^^^^
+lib/features/dashboard/dashboard_screen.dart:46:29: Error: The getter 'isLoading' isn't defined for the type 'Object?'.
+ - 'Object' is from 'dart:core'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'isLoading'.
+              if (dashboard.isLoading) {
+                            ^^^^^^^^^
+lib/features/dashboard/dashboard_screen.dart:50:29: Error: The getter 'error' isn't defined for the type 'Object?'.
+ - 'Object' is from 'dart:core'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'error'.
+              if (dashboard.error != null) {
+                            ^^^^^
+lib/features/dashboard/dashboard_screen.dart:53:31: Error: The getter 'error' isn't defined for the type 'Object?'.
+ - 'Object' is from 'dart:core'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'error'.
+                    dashboard.error!,
+                              ^^^^^
+lib/features/dashboard/dashboard_screen.dart:59:44: Error: The getter 'artistDetails' isn't defined for the type 'Object?'.
+ - 'Object' is from 'dart:core'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'artistDetails'.
+              final artistName = dashboard.artistDetails?.name ?? auth.user?['name'] ?? 'Artist';
+                                           ^^^^^^^^^^^^^
+lib/features/dashboard/dashboard_screen.dart:60:44: Error: The getter 'artistDetails' isn't defined for the type 'Object?'.
+ - 'Object' is from 'dart:core'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'artistDetails'.
+              final profileUrl = dashboard.artistDetails?.profilePicture ?? dashboard.artistDetails?.image ?? auth.user?['profilePicture'];
+                                           ^^^^^^^^^^^^^
+lib/features/dashboard/dashboard_screen.dart:60:87: Error: The getter 'artistDetails' isn't defined for the type 'Object?'.
+ - 'Object' is from 'dart:core'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'artistDetails'.
+              final profileUrl = dashboard.artistDetails?.profilePicture ?? dashboard.artistDetails?.image ?? auth.user?['profilePicture'];
+                                                                                      ^^^^^^^^^^^^^
+lib/features/dashboard/dashboard_screen.dart:103:35: Error: The getter 'artistStats' isn't defined for the type 'Object?'.
+ - 'Object' is from 'dart:core'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'artistStats'.
+                    if (dashboard.artistStats != null || dashboard.artistEarnings != null)
+                                  ^^^^^^^^^^^
+lib/features/dashboard/dashboard_screen.dart:103:68: Error: The getter 'artistEarnings' isn't defined for the type 'Object?'.
+ - 'Object' is from 'dart:core'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'artistEarnings'.
+                    if (dashboard.artistStats != null || dashboard.artistEarnings != null)
+                                                                   ^^^^^^^^^^^^^^
+lib/features/dashboard/dashboard_screen.dart:104:49: Error: The getter 'artistStats' isn't defined for the type 'Object?'.
+ - 'Object' is from 'dart:core'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'artistStats'.
+                      _buildStatsGrid(dashboard.artistStats, dashboard.artistEarnings, navProvider),
+                                                ^^^^^^^^^^^
+lib/features/dashboard/dashboard_screen.dart:104:72: Error: The getter 'artistEarnings' isn't defined for the type 'Object?'.
+ - 'Object' is from 'dart:core'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'artistEarnings'.
+                      _buildStatsGrid(dashboard.artistStats, dashboard.artistEarnings, navProvider),
+                                                                       ^^^^^^^^^^^^^^
+lib/features/dashboard/dashboard_screen.dart:180:35: Error: The getter 'artistEarnings' isn't defined for the type 'Object?'.
+ - 'Object' is from 'dart:core'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'artistEarnings'.
+                    if (dashboard.artistEarnings?.history != null && dashboard.artistEarnings!.history.isNotEmpty)
+                                  ^^^^^^^^^^^^^^
+lib/features/dashboard/dashboard_screen.dart:180:80: Error: The getter 'artistEarnings' isn't defined for the type 'Object?'.
+ - 'Object' is from 'dart:core'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'artistEarnings'.
+                    if (dashboard.artistEarnings?.history != null && dashboard.artistEarnings!.history.isNotEmpty)
+                                                                               ^^^^^^^^^^^^^^
+lib/features/dashboard/dashboard_screen.dart:181:36: Error: The getter 'artistEarnings' isn't defined for the type 'Object?'.
+ - 'Object' is from 'dart:core'.
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'artistEarnings'.
+                      ...dashboard.artistEarnings!.history.take(5).map((t) => _buildRecentActivityItem(t))
+                                   ^^^^^^^^^^^^^^
+lib/features/dashboard/dashboard_screen.dart:202:26: Error: 'ArtistStats' isn't a type.
+  Widget _buildStatsGrid(ArtistStats? stats, ArtistEarnings? earnings, NavigationProvider navProvider) {
+                         ^^^^^^^^^^^
+lib/features/dashboard/dashboard_screen.dart:202:46: Error: 'ArtistEarnings' isn't a type.
+  Widget _buildStatsGrid(ArtistStats? stats, ArtistEarnings? earnings, NavigationProvider navProvider) {
+                                             ^^^^^^^^^^^^^^
+lib/features/dashboard/dashboard_screen.dart:361:35: Error: 'Transaction' isn't a type.
+  Widget _buildRecentActivityItem(Transaction transaction) {
+                                  ^^^^^^^^^^^
+lib/features/live/live_screen.dart:244:24: Error: The getter 'VideoFit' isn't defined for the type '_LiveScreenState'.
+ - '_LiveScreenState' is from 'package:lugmatic_artist_studio/features/live/live_screen.dart' ('lib/features/live/live_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'VideoFit'.
+                  fit: VideoFit.contain,
+                       ^^^^^^^^
+Target kernel_snapshot_program failed: Exception
+
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileFlutterBuildRelease'.
+> Process 'command '/Users/Ish/development/flutter/bin/flutter'' finished with non-zero exit value 1
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 47s
+Running Gradle task 'assembleRelease'...                           47.9s
+Gradle task assembleRelease failed with exit code 1

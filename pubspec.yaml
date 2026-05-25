@@ -72,14 +72,17 @@ flutter:
 
 # Configuration for the native splash screen
 flutter_native_splash:
-  color: "#0F172A"
+  color: "#0E0E15"
   image: assets/images/splash.png
   android: true
   ios: true
   web: true
-  android_gravity: center
-  ios_content_mode: center
+  android_gravity: fill
+  ios_content_mode: scaleAspectFill
   fullscreen: true
+  android_12:
+    color: "#0E0E15"
+    image: assets/images/icon_foreground.png
 
 # Configuration for the app launcher icon
 flutter_launcher_icons:
@@ -87,6 +90,6 @@ flutter_launcher_icons:
   ios: true
   image_path: "assets/images/icon.png"
   adaptive_icon_background: "#000000"
-  adaptive_icon_foreground: "assets/images/icon.png"
+  adaptive_icon_foreground: "assets/images/icon_foreground.png"
   remove_alpha_ios: true
   background_color_ios: "#ffffff"

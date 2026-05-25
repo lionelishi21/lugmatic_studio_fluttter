@@ -12,20 +12,24 @@ class UploadService {
     required String type, // 'song' or 'podcast'
     required String genreId,
     String? description,
+    String? videoFileKey,
     Function(double)? onProgress,
   }) async {
     try {
       String fileName = file.path.split('/').last;
       String coverName = coverArt.path.split('/').last;
 
-      FormData formData = FormData.fromMap({
+      final fields = <String, dynamic>{
         'title': title,
         'type': type,
         'genreId': genreId,
         'description': description ?? '',
         'file': await MultipartFile.fromFile(file.path, filename: fileName),
         'coverArt': await MultipartFile.fromFile(coverArt.path, filename: coverName),
-      });
+      };
+      if (videoFileKey != null) fields['videoFileKey'] = videoFileKey;
+
+      FormData formData = FormData.fromMap(fields);
 
       final response = await _apiClient.dio.post(
         '/artist/upload',

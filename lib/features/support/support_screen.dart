@@ -209,7 +209,7 @@ class _SupportScreenState extends State<SupportScreen> {
           maxLines: maxLines,
           validator: validator,
           style: const TextStyle(color: AppColors.foreground, fontSize: 14),
-          decoration: NeumorphicTheme.neumorphicInputDecoration(hint: hint),
+          decoration: NeumorphicTheme.neumorphicInputDecoration(label: 'Message', hint: hint),
         ),
       ],
     );

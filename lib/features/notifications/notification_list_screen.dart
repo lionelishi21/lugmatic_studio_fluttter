@@ -87,7 +87,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
     switch (type) {
       case 'gift':
         icon = FontAwesomeIcons.gift;
-        iconColor = Colors.roseAccent;
+        iconColor = Colors.pinkAccent;
         break;
       case 'earnings':
         icon = FontAwesomeIcons.coins;
@@ -99,7 +99,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
         break;
       case 'comment':
         icon = FontAwesomeIcons.comment;
-        iconColor = Colors.emeraldAccent;
+        iconColor = Colors.greenAccent;
         break;
       default:
         icon = Icons.notifications_outlined;
